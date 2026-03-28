@@ -2,183 +2,569 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Job Finder - أحدث فرص العمل</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobFinder - فرص العمل</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
+
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-link-color: #2481cc;
+            --tg-theme-button-color: #2481cc;
+            --tg-theme-button-text-color: #ffffff;
+            --primary-color: #2481cc;
+            --secondary-color: #1a5f99;
+            --accent-color: #00c853;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --card-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
         body {
-            background: #f4f7fc;
-            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            line-height: 1.6;
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
         }
-        .container {
-            max-width: 800px;
-            margin: auto;
-        }
-        .job-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            padding: 20px;
-            transition: 0.2s;
-            border-right: 5px solid #2c7da0;
-        }
-        .job-card.highlight {
-            border-right-color: #ff9800;
-            background: #fff9e6;
-            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-        }
-        h2 {
-            color: #1e3c5c;
-            font-size: 1.4rem;
-            margin-bottom: 8px;
-        }
-        .company {
-            color: #2c7da0;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .location {
-            color: #5a6e7c;
-            margin-bottom: 12px;
-            font-size: 0.9rem;
-        }
-        .description {
-            color: #2d3e50;
-            line-height: 1.5;
-            margin-bottom: 16px;
-            font-size: 0.95rem;
-        }
-        .apply-btn {
-            display: inline-block;
-            background: #2c7da0;
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
             color: white;
-            padding: 10px 20px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: 0.2s;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
-        }
-        .apply-btn:hover {
-            background: #1e5a78;
-        }
-        .note {
-            text-align: center;
-            margin-top: 30px;
-            padding: 12px;
-            background: #ffeedd;
+            padding: 20px;
             border-radius: 12px;
-            color: #a55800;
-            font-size: 0.9rem;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: var(--card-shadow);
         }
-        .loader {
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .notice-banner {
+            background: linear-gradient(135deg, var(--warning-color), #f57c00);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: var(--card-shadow);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        .notice-banner i {
+            margin-left: 8px;
+        }
+
+        .jobs-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .job-card {
+            background: var(--tg-theme-bg-color);
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .job-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .job-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 4px;
+        }
+
+        .job-company {
+            font-size: 14px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .job-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .meta-tag {
+            background: #f0f0f0;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .meta-tag.remote {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .meta-tag.location {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .job-description {
+            font-size: 14px;
+            color: var(--tg-theme-text-color);
+            margin-bottom: 16px;
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 8px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .job-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 12px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .job-date {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .apply-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .apply-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(36, 129, 204, 0.4);
+        }
+
+        .apply-btn:active {
+            transform: scale(0.98);
+        }
+
+        .loading {
             text-align: center;
             padding: 40px;
-            font-size: 1.2rem;
-            color: #2c7da0;
+            color: var(--tg-theme-hint-color);
         }
-        footer {
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: var(--danger-color);
+            padding: 16px;
+            border-radius: 8px;
             text-align: center;
-            margin-top: 40px;
-            font-size: 0.8rem;
-            color: #6c757d;
+            margin: 20px 0;
         }
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            .job-card { padding: 15px; }
-            h2 { font-size: 1.2rem; }
+
+        .footer-notice {
+            background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+            border: 2px solid var(--warning-color);
+            color: #e65100;
+            padding: 16px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: var(--card-shadow);
+        }
+
+        .footer-notice strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .stats-bar {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+
+        .stat-item {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--tg-theme-hint-color);
+        }
+
+        .refresh-btn {
+            background: var(--tg-theme-bg-color);
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        /* تحسينات للجوال */
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .job-title {
+                font-size: 16px;
+            }
+
+            .apply-btn {
+                padding: 8px 16px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1 style="text-align:center; margin-bottom: 20px;">🚀 أحدث فرص العمل</h1>
-    <div id="jobs-container" class="loader">جاري تحميل الفرص...</div>
-    <div class="note">
-        ⚠️ ملاحظة: عند الضغط على "تقديم الان" ستظهر إعلانات. يُرجى تخطيها للوصول إلى رابط التقديم.
+    <!-- رأس الصفحة -->
+    <div class="header">
+        <h1>🔍 JobFinder</h1>
+        <p>أحدث فرص العمل في ألمانيا</p>
     </div>
-    <footer>Powered by JobFinderBot</footer>
-</div>
 
-<script>
-    // Change this to your actual Flask server URL (public IP or domain)
-    const API_BASE_URL = "https://your-server.com:5000/api/jobs";
-    // Alternative: if running on same server but local, use relative path, but this is static so must be absolute.
+    <!-- إشعار مهم -->
+    <div class="notice-banner">
+        ⚠️ يجب تخطي الإعلانات للوصول لرابط التقديم
+    </div>
 
-    async function fetchJobs() {
-        try {
-            const response = await fetch(API_BASE_URL);
-            if (!response.ok) throw new Error('Network error');
-            const jobs = await response.json();
-            displayJobs(jobs);
-        } catch (err) {
-            document.getElementById('jobs-container').innerHTML = '<div style="color:red">⚠️ فشل تحميل البيانات. تأكد من تشغيل الخادم.</div>';
-            console.error(err);
-        }
-    }
+    <!-- شريط الإحصائيات -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-value" id="total-jobs">0</div>
+            <div class="stat-label">وظيفة متاحة</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="today-jobs">0</div>
+            <div class="stat-label">اليوم</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="remote-jobs">0</div>
+            <div class="stat-label">عن بُعد</div>
+        </div>
+    </div>
 
-    function displayJobs(jobs) {
-        const container = document.getElementById('jobs-container');
-        if (!jobs.length) {
-            container.innerHTML = '<div>لا توجد فرص متاحة حالياً.</div>';
-            return;
-        }
+    <!-- زر التحديث -->
+    <div style="text-align: center; margin-bottom: 16px;">
+        <button class="refresh-btn" onclick="loadJobs()">
+            🔄 تحديث القائمة
+        </button>
+    </div>
 
-        // Get job_id from URL query string
-        const urlParams = new URLSearchParams(window.location.search);
-        const highlightJobId = urlParams.get('job_id');
+    <!-- حاوية الوظائف -->
+    <div class="jobs-container" id="jobs-container">
+        <div class="loading">
+            <div class="loading-spinner"></div>
+            <p>جاري تحميل الوظائف...</p>
+        </div>
+    </div>
 
-        let html = '';
-        jobs.forEach(job => {
-            const isHighlight = (job.id === highlightJobId);
-            const cardClass = isHighlight ? 'job-card highlight' : 'job-card';
+    <!-- إشعار التذييل -->
+    <div class="footer-notice">
+        <strong>⚠️ ملاحظة مهمة جداً</strong>
+        عند الضغط على "التقديم الآن"، ستظهر إعلانات يجب تخطيها<br>
+        للوصول إلى رابط التقديم أو البريد الإلكتروني<br>
+        <small>شكراً لدعمكم للبوت المجاني! 🙏</small>
+    </div>
 
-            // Shorten description
-            let desc = job.description || '';
-            if (desc.length > 300) desc = desc.substring(0, 300) + '...';
+    <script>
+        // تهيئة Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-            html += `
-                <div class="${cardClass}" id="job-${job.id}">
-                    <h2>${escapeHtml(job.title)}</h2>
-                    <div class="company">🏢 ${escapeHtml(job.company)}</div>
-                    <div class="location">📍 ${escapeHtml(job.location)}</div>
-                    <div class="description">${escapeHtml(desc)}</div>
-                    <a href="${escapeHtml(job.short_url)}" class="apply-btn" target="_blank">📩 تقديم الان</a>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
+        // إعدادات الألوان حسب ثيم تيليجرام
+        document.documentElement.style.setProperty('--tg-theme-bg-color', tg.backgroundColor || '#ffffff');
+        document.documentElement.style.setProperty('--tg-theme-text-color', tg.textColor || '#000000');
+        document.documentElement.style.setProperty('--tg-theme-hint-color', tg.hintColor || '#999999');
+        document.documentElement.style.setProperty('--tg-theme-link-color', tg.linkColor || '#2481cc');
+        document.documentElement.style.setProperty('--tg-theme-button-color', tg.buttonColor || '#2481cc');
+        document.documentElement.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor || '#ffffff');
 
-        // If a job_id was provided, scroll to that job
-        if (highlightJobId) {
-            const element = document.getElementById(`job-${highlightJobId}`);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // ثوابت API
+        const ARBEITNOW_API = 'https://arbeitnow.com/api/job-board-api';
+        const ADSLY_API = 'https://adsly.me/api/link/create';
+        const ADSLY_API_KEY = 'wXQjh0fSfId9KuS2XW0rFopflitN2M76';
+
+        // تخزين الوظائف
+        let jobsData = [];
+
+        // دالة اختصار الرابط
+        async function shortenUrl(url) {
+            try {
+                if (!url.startsWith('https://')) {
+                    url = url.replace('http://', 'https://');
+                }
+
+                const response = await fetch(`${ADSLY_API}?api_key=${ADSLY_API_KEY}&url=${encodeURIComponent(url)}`);
+                const result = await response.json();
+
+                if (result.ok) {
+                    return result.link;
+                } else {
+                    console.error('فشل اختصار الرابط:', result.message);
+                    return url;
+                }
+            } catch (error) {
+                console.error('خطأ في اختصار الرابط:', error);
+                return url;
             }
         }
-    }
 
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            return m;
-        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
-            return c;
+        // دالة جلب الوظائف
+        async function loadJobs() {
+            const container = document.getElementById('jobs-container');
+            container.innerHTML = `
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>جاري تحميل الوظائف...</p>
+                </div>
+            `;
+
+            try {
+                const response = await fetch(`${ARBEITNOW_API}?limit=50`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                jobsData = data.data || [];
+
+                if (jobsData.length === 0) {
+                    container.innerHTML = `
+                        <div class="error-message">
+                            ❌ لا توجد وظائف متاحة حالياً
+                        </div>
+                    `;
+                    return;
+                }
+
+                // تحديث الإحصائيات
+                updateStats(jobsData);
+
+                // عرض الوظائف
+                displayJobs(jobsData.slice(0, 30));
+
+            } catch (error) {
+                console.error('خطأ في جلب الوظائف:', error);
+                container.innerHTML = `
+                    <div class="error-message">
+                        ❌ حدث خطأ في تحميل الوظائف<br>
+                        <small>${error.message}</small><br>
+                        <button class="refresh-btn" onclick="loadJobs()" style="margin-top: 10px;">
+                            🔄 حاول مرة أخرى
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // دالة تحديث الإحصائيات
+        function updateStats(jobs) {
+            document.getElementById('total-jobs').textContent = jobs.length;
+            
+            const today = new Date().toDateString();
+            const todayJobs = jobs.filter(job => {
+                const jobDate = new Date(job.created_at * 1000).toDateString();
+                return jobDate === today;
+            }).length;
+            document.getElementById('today-jobs').textContent = todayJobs;
+
+            const remoteJobs = jobs.filter(job => job.remote).length;
+            document.getElementById('remote-jobs').textContent = remoteJobs;
+        }
+
+        // دالة عرض الوظائف
+        async function displayJobs(jobs) {
+            const container = document.getElementById('jobs-container');
+            container.innerHTML = '';
+
+            for (const job of jobs) {
+                const card = await createJobCard(job);
+                container.appendChild(card);
+            }
+        }
+
+        // دالة إنشاء بطاقة وظيفة
+        async function createJobCard(job) {
+            const card = document.createElement('div');
+            card.className = 'job-card';
+
+            // تنظيف النص
+            const cleanDescription = cleanHtmlText(job.description || 'لا يوجد وصف متاح', 300);
+            const jobDate = new Date(job.created_at * 1000).toLocaleDateString('ar-EG');
+            
+            // اختصار الرابط
+            const shortenedUrl = await shortenUrl(job.url);
+
+            // أنواع الوظائف
+            const jobTypes = (job.job_types || []).join(' | ') || 'غير محدد';
+            
+            // العلامات
+            const tags = (job.tags || []).slice(0, 3).join(' • ') || 'عام';
+
+            card.innerHTML = `
+                <div class="job-header">
+                    <div>
+                        <div class="job-title">${escapeHtml(job.title)}</div>
+                        <div class="job-company">🏢 ${escapeHtml(job.company_name)}</div>
+                    </div>
+                </div>
+
+                <div class="job-meta">
+                    <span class="meta-tag location">📍 ${escapeHtml(job.location || 'غير محدد')}</span>
+                    <span class="meta-tag ${job.remote ? 'remote' : ''}">
+                        ${job.remote ? '🏠 عن بُعد' : '📍 من المكتب'}
+                    </span>
+                    <span class="meta-tag">💼 ${escapeHtml(jobTypes)}</span>
+                </div>
+
+                <div class="job-description">${cleanDescription}</div>
+
+                <div class="job-footer">
+                    <span class="job-date">📅 ${jobDate}</span>
+                    <a href="${shortenedUrl}" target="_blank" class="apply-btn" onclick="handleApplyClick(event, '${shortenedUrl}')">
+                        🚀 التقديم الآن
+                    </a>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // دالة معالجة الضغط على زر التقديم
+        function handleApplyClick(event, url) {
+            // إظهار تنبيه
+            tg.showAlert('⚠️ سيتم فتح صفحة الإعلانات، يجب تخطيها للوصول للرابط!');
+        }
+
+        // دالة تنظيف HTML
+        function cleanHtmlText(html, maxLength) {
+            if (!html) return 'لا يوجد وصف';
+            
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+            let text = temp.textContent || temp.innerText || '';
+            
+            text = text.replace(/\s+/g, ' ').trim();
+            
+            if (text.length > maxLength) {
+                text = text.substring(0, maxLength) + '...';
+            }
+            
+            return text;
+        }
+
+        // دالة الهروب من HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // دالة إرسال البيانات لتيليجرام
+        function sendToTelegram(data) {
+            tg.sendData(JSON.stringify(data));
+        }
+
+        // تحميل الوظائف عند بدء التطبيق
+        document.addEventListener('DOMContentLoaded', loadJobs);
+
+        // تحديث تلقائي كل 5 دقائق
+        setInterval(loadJobs, 300000);
+
+        // التعامل مع زر الرجوع
+        tg.BackButton.onClick(() => {
+            tg.close();
         });
-    }
 
-    fetchJobs();
-</script>
+        // إظهار زر الرجوع
+        tg.BackButton.show();
+    </script>
 </body>
 </html>
