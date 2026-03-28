@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Job Finder - أحدث فرص العمل</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: #f4f7fc;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        .job-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            transition: 0.2s;
+            border-right: 5px solid #2c7da0;
+        }
+        .job-card.highlight {
+            border-right-color: #ff9800;
+            background: #fff9e6;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+        }
+        h2 {
+            color: #1e3c5c;
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+        .company {
+            color: #2c7da0;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .location {
+            color: #5a6e7c;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+        .description {
+            color: #2d3e50;
+            line-height: 1.5;
+            margin-bottom: 16px;
+            font-size: 0.95rem;
+        }
+        .apply-btn {
+            display: inline-block;
+            background: #2c7da0;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.2s;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .apply-btn:hover {
+            background: #1e5a78;
+        }
+        .note {
+            text-align: center;
+            margin-top: 30px;
+            padding: 12px;
+            background: #ffeedd;
+            border-radius: 12px;
+            color: #a55800;
+            font-size: 0.9rem;
+        }
+        .loader {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #2c7da0;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .job-card { padding: 15px; }
+            h2 { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 style="text-align:center; margin-bottom: 20px;">🚀 أحدث فرص العمل</h1>
+    <div id="jobs-container" class="loader">جاري تحميل الفرص...</div>
+    <div class="note">
+        ⚠️ ملاحظة: عند الضغط على "تقديم الان" ستظهر إعلانات. يُرجى تخطيها للوصول إلى رابط التقديم.
+    </div>
+    <footer>Powered by JobFinderBot</footer>
+</div>
+
+<script>
+    // Change this to your actual Flask server URL (public IP or domain)
+    const API_BASE_URL = "https://your-server.com:5000/api/jobs";
+    // Alternative: if running on same server but local, use relative path, but this is static so must be absolute.
+
+    async function fetchJobs() {
+        try {
+            const response = await fetch(API_BASE_URL);
+            if (!response.ok) throw new Error('Network error');
+            const jobs = await response.json();
+            displayJobs(jobs);
+        } catch (err) {
+            document.getElementById('jobs-container').innerHTML = '<div style="color:red">⚠️ فشل تحميل البيانات. تأكد من تشغيل الخادم.</div>';
+            console.error(err);
+        }
+    }
+
+    function displayJobs(jobs) {
+        const container = document.getElementById('jobs-container');
+        if (!jobs.length) {
+            container.innerHTML = '<div>لا توجد فرص متاحة حالياً.</div>';
+            return;
+        }
+
+        // Get job_id from URL query string
+        const urlParams = new URLSearchParams(window.location.search);
+        const highlightJobId = urlParams.get('job_id');
+
+        let html = '';
+        jobs.forEach(job => {
+            const isHighlight = (job.id === highlightJobId);
+            const cardClass = isHighlight ? 'job-card highlight' : 'job-card';
+
+            // Shorten description
+            let desc = job.description || '';
+            if (desc.length > 300) desc = desc.substring(0, 300) + '...';
+
+            html += `
+                <div class="${cardClass}" id="job-${job.id}">
+                    <h2>${escapeHtml(job.title)}</h2>
+                    <div class="company">🏢 ${escapeHtml(job.company)}</div>
+                    <div class="location">📍 ${escapeHtml(job.location)}</div>
+                    <div class="description">${escapeHtml(desc)}</div>
+                    <a href="${escapeHtml(job.short_url)}" class="apply-btn" target="_blank">📩 تقديم الان</a>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+
+        // If a job_id was provided, scroll to that job
+        if (highlightJobId) {
+            const element = document.getElementById(`job-${highlightJobId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    fetchJobs();
+</script>
+</body>
+</html>
