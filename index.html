@@ -162,6 +162,18 @@
     return (s || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  // btoa/atob only handle Latin1 text. Job titles/companies scraped from
+  // LinkedIn often contain unicode (en-dashes, curly quotes, emoji, non-
+  // Latin scripts), which makes plain btoa() throw and silently kill the
+  // whole render loop. Encode/decode raw UTF-8 bytes instead, matching
+  // how the Python bot base64-encodes the same payload server-side.
+  function utf8ToBase64Url(str) {
+    const bytes = new TextEncoder().encode(str);
+    let binary = "";
+    bytes.forEach(b => { binary += String.fromCharCode(b); });
+    return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+
   function timeAgo(iso) {
     if (!iso) return "";
     const diffMs = Date.now() - new Date(iso).getTime();
@@ -199,27 +211,33 @@
     }
 
     listEl.innerHTML = jobs.map(job => {
-      const logo = job.company_logo
-        ? `<img class="job-logo" src="${esc(job.company_logo)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'job-logo',textContent:'💼'}))" />`
-        : `<div class="job-logo">💼</div>`;
-      const catLabel = CATEGORY_LABELS[job.category] || "💼 Job";
-      return `
-        <a class="job-card" href="details.html?startapp=${encodeURIComponent(btoa(JSON.stringify({
+      try {
+        const logo = job.company_logo
+          ? `<img class="job-logo" src="${esc(job.company_logo)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'job-logo',textContent:'💼'}))" />`
+          : `<div class="job-logo">💼</div>`;
+        const catLabel = CATEGORY_LABELS[job.category] || "💼 Job";
+        const payload = utf8ToBase64Url(JSON.stringify({
           id: job.job_id, t: job.title, c: job.company, l: job.location,
           u: job.job_url, cat: job.category, img: job.company_logo || ""
-        })))}">
-          ${logo}
-          <div class="job-info">
-            <div class="job-title">${esc(job.title)}</div>
-            <div class="job-company">${esc(job.company)}</div>
-            <div class="job-meta">
-              <span>📍 ${esc(job.location || "Remote")}</span>
-              <span class="dot">🌐 Remote</span>
-              <span class="dot">${esc(timeAgo(job.fetched_at))}</span>
+        }));
+        return `
+          <a class="job-card" href="details.html?startapp=${encodeURIComponent(payload)}">
+            ${logo}
+            <div class="job-info">
+              <div class="job-title">${esc(job.title)}</div>
+              <div class="job-company">${esc(job.company)}</div>
+              <div class="job-meta">
+                <span>📍 ${esc(job.location || "Remote")}</span>
+                <span class="dot">🌐 Remote</span>
+                <span class="dot">${esc(timeAgo(job.fetched_at))}</span>
+              </div>
             </div>
-          </div>
-          <div class="job-cat-pill">${catLabel}</div>
-        </a>`;
+            <div class="job-cat-pill">${catLabel}</div>
+          </a>`;
+      } catch (e) {
+        console.warn("Skipping job card that failed to render:", job, e);
+        return "";
+      }
     }).join("");
   }
 
