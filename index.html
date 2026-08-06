@@ -223,19 +223,43 @@
     }).join("");
   }
 
+  // PostgREST caps any single request at PAGE_SIZE rows even if you ask
+  // for more via ?limit=, so a fixed limit silently drops older jobs once
+  // the table grows past it. Page through with Range headers instead so
+  // every row in linkedin_jobs actually makes it into allJobs.
+  const PAGE_SIZE = 1000;
+
+  async function fetchJobsPage(from, to) {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/linkedin_jobs?select=job_id,title,company,company_logo,location,job_url,category,fetched_at&order=fetched_at.desc`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          Range: `${from}-${to}`,
+          Prefer: "count=exact",
+        },
+      }
+    );
+    if (!res.ok && res.status !== 206) throw new Error(`Supabase returned ${res.status}`);
+    const page = await res.json();
+    const contentRange = res.headers.get("content-range"); // e.g. "0-999/2431"
+    const total = contentRange ? parseInt(contentRange.split("/")[1], 10) : page.length;
+    return { page, total };
+  }
+
   async function loadJobs() {
     try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/linkedin_jobs?select=job_id,title,company,company_logo,location,job_url,category,fetched_at&order=fetched_at.desc&limit=200`,
-        {
-          headers: {
-            apikey: SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-          },
-        }
-      );
-      if (!res.ok) throw new Error(`Supabase returned ${res.status}`);
-      allJobs = await res.json();
+      allJobs = [];
+      let from = 0;
+      let total = Infinity;
+      while (from < total) {
+        const { page, total: reportedTotal } = await fetchJobsPage(from, from + PAGE_SIZE - 1);
+        allJobs = allJobs.concat(page);
+        total = Number.isFinite(reportedTotal) ? reportedTotal : allJobs.length;
+        if (!page.length) break; // safety net against an infinite loop
+        from += PAGE_SIZE;
+      }
     } catch (e) {
       document.getElementById("count-label").textContent = "Couldn't load jobs";
       document.getElementById("list").innerHTML = `<div class="state-msg">Failed to load jobs. Please try again shortly.</div>`;
