@@ -154,7 +154,8 @@
 
   <div class="card">
     <div class="job-head">
-      <img class="logo" id="logo" alt="" />
+      <img class="logo hidden" id="logo" alt="" />
+      <div class="logo" id="logo-fallback">💼</div>
       <div>
         <h1 id="title">Loading…</h1>
         <div class="company" id="company"></div>
@@ -205,7 +206,7 @@
 
   // ---- Replace with your real AdsGram block id ----
   const ADSGRAM_BLOCK_ID = "41465";
-  const WAIT_SECONDS = 45;
+  const WAIT_SECONDS = 120;
 
   function decodeStartParam(param) {
     try {
@@ -262,15 +263,18 @@
     document.getElementById("apply-link").href = applyUrl;
 
     const logoEl = document.getElementById("logo");
+    const logoFallback = document.getElementById("logo-fallback");
     if (data.img) {
       logoEl.src = data.img;
-      logoEl.onerror = () => { logoEl.removeAttribute("src"); logoEl.textContent = "💼"; };
+      logoEl.classList.remove("hidden");
+      logoFallback.classList.add("hidden");
+      logoEl.onerror = () => {
+        logoEl.classList.add("hidden");
+        logoFallback.classList.remove("hidden");
+      };
     } else {
-      logoEl.textContent = "💼";
-      logoEl.style.display = "flex";
-      logoEl.style.alignItems = "center";
-      logoEl.style.justifyContent = "center";
-      logoEl.style.fontSize = "22px";
+      logoEl.classList.add("hidden");
+      logoFallback.classList.remove("hidden");
     }
   } else {
     document.getElementById("title").textContent = "Job details unavailable";
