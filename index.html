@@ -3,16 +3,18 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>Job Details</title>
+<title>All Jobs · JOBS204</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {
     --li-blue: #0a66c2;
     --li-blue-dark: #004182;
+    --li-blue-light: #eaf3fc;
     --li-bg: #f3f6f8;
     --li-white: #ffffff;
     --li-text: #191919;
     --li-muted: #56687a;
+    --li-border: #e3e9ee;
   }
   * { box-sizing: border-box; }
   body {
@@ -21,70 +23,93 @@
     background: var(--li-bg);
     color: var(--li-text);
     min-height: 100vh;
+    padding-bottom: 24px;
   }
+
   .topbar {
     background: linear-gradient(135deg, var(--li-blue), var(--li-blue-dark));
     color: #fff;
-    padding: 20px 18px 28px;
-    border-radius: 0 0 20px 20px;
+    padding: 18px 16px 22px;
+    position: sticky; top: 0; z-index: 5;
   }
-  .topbar .brand { font-size: 13px; opacity: .85; letter-spacing: .5px; }
-  .card {
+  .topbar .title { font-size: 17px; font-weight: 700; }
+  .topbar .subtitle { font-size: 12.5px; opacity: .85; margin-top: 3px; }
+
+  .filters {
+    display: flex; gap: 8px; overflow-x: auto;
+    padding: 12px 14px 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0;
     background: var(--li-white);
-    margin: -18px 14px 14px;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 4px 18px rgba(10,102,194,.10);
+    border: 1.5px solid var(--li-border);
+    color: var(--li-muted);
+    font-size: 12.5px; font-weight: 600;
+    padding: 7px 13px; border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
   }
-  .logo {
-    width: 52px; height: 52px; border-radius: 10px;
-    background: var(--li-bg);
+  .chip.active {
+    background: var(--li-blue);
+    border-color: var(--li-blue);
+    color: #fff;
+  }
+
+  .list { padding: 6px 14px 0; display: flex; flex-direction: column; gap: 10px; }
+
+  .job-card {
+    background: var(--li-white);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: 0 2px 10px rgba(10,102,194,.08);
+    display: flex; gap: 12px; align-items: flex-start;
+    text-decoration: none; color: inherit;
+  }
+  .job-card:active { background: var(--li-blue-light); }
+  .job-logo {
+    width: 46px; height: 46px; border-radius: 10px; flex-shrink: 0;
+    background: var(--li-blue-light);
     display: flex; align-items: center; justify-content: center;
-    font-size: 22px; margin-bottom: 12px;
-    border: 1px solid #e3e9ee;
+    font-size: 20px;
+    border: 1px solid var(--li-border);
     object-fit: cover;
   }
-  h1 { font-size: 20px; margin: 4px 0 6px; line-height: 1.3; }
-  .company { color: var(--li-blue); font-weight: 600; font-size: 15px; margin-bottom: 10px; }
-  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-  .pill {
-    background: #eaf3fc; color: var(--li-blue-dark);
-    padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  .job-info { flex: 1; min-width: 0; }
+  .job-title { font-size: 14.5px; font-weight: 700; line-height: 1.3; }
+  .job-company { color: var(--li-blue); font-size: 12.5px; font-weight: 600; margin-top: 2px; }
+  .job-meta { color: var(--li-muted); font-size: 11.5px; margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .job-meta .dot::before { content: "· "; }
+  .job-cat-pill {
+    background: var(--li-blue-light); color: var(--li-blue-dark);
+    font-size: 10.5px; font-weight: 700;
+    padding: 3px 8px; border-radius: 12px;
+    align-self: flex-start;
   }
-  .divider { height: 1px; background: #e9edf1; margin: 16px 0; }
-  .apply-btn {
-    display: block; text-align: center; text-decoration: none;
-    background: var(--li-blue); color: #fff; font-weight: 600;
-    padding: 14px; border-radius: 24px; font-size: 15px;
-    box-shadow: 0 4px 14px rgba(10,102,194,.30);
+
+  .state-msg {
+    text-align: center; color: var(--li-muted);
+    font-size: 13.5px; padding: 40px 20px;
   }
-  .apply-btn:active { background: var(--li-blue-dark); }
+
   .footer {
     text-align: center; font-size: 12px; color: var(--li-muted);
-    margin: 18px 0 8px;
+    margin: 20px 0 8px;
   }
-  .footer a { color: var(--li-blue); text-decoration: none; }
+  .footer a { color: var(--li-blue); text-decoration: none; font-weight: 600; }
 </style>
 </head>
 <body>
   <div class="topbar">
-    <div class="brand">💼 JOBS204 · Remote Opportunities</div>
+    <div class="title">💼 All Remote Jobs</div>
+    <div class="subtitle" id="count-label">Loading opportunities…</div>
   </div>
 
-  <div class="card">
-    <img class="logo" id="logo" alt="" />
-    <h1 id="title">Loading…</h1>
-    <div class="company" id="company"></div>
+  <div class="filters" id="filters"></div>
 
-    <div class="meta-row">
-      <span class="pill" id="location-pill">📍 —</span>
-      <span class="pill">🌐 Remote</span>
-      <span class="pill" id="category-pill"></span>
-    </div>
-
-    <div class="divider"></div>
-
-    <a class="apply-btn" id="apply-link" href="#" target="_blank">View on LinkedIn &amp; Apply →</a>
+  <div class="list" id="list">
+    <div class="state-msg">Loading jobs…</div>
   </div>
 
   <div class="footer">
@@ -96,19 +121,10 @@
   tg?.ready();
   tg?.expand();
 
-  function decodeStartParam(param) {
-    try {
-      let b64 = param.replace(/-/g, "+").replace(/_/g, "/");
-      while (b64.length % 4) b64 += "=";
-      return JSON.parse(atob(b64));
-    } catch (e) {
-      return null;
-    }
-  }
-
-  const startParam = tg?.initDataUnsafe?.start_param
-    || new URLSearchParams(window.location.search).get("startapp")
-    || new URLSearchParams(window.location.search).get("tgWebAppStartParam");
+  // Public (read-only) Supabase credentials — safe to expose client-side,
+  // RLS on linkedin_jobs only allows SELECT with this key.
+  const SUPABASE_URL = "https://yfgklalkjldbcykczezt.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_rIPkmh5DNK3ZKvW5ygFBXA_2_y0zDeX";
 
   const CATEGORY_LABELS = {
     python: "🐍 Python",
@@ -117,26 +133,99 @@
     web_dev: "🌐 Web Dev",
     software_eng: "💻 Software Eng",
   };
+  const CATEGORY_ORDER = ["python", "ai_ml", "data_science", "web_dev", "software_eng"];
 
-  const data = startParam ? decodeStartParam(startParam) : null;
+  let allJobs = [];
+  let activeFilter = "all";
 
-  if (data) {
-    document.getElementById("title").textContent = data.t || "Job Opportunity";
-    document.getElementById("company").textContent = data.c || "";
-    document.getElementById("location-pill").textContent = "📍 " + (data.l || "Remote");
-    document.getElementById("category-pill").textContent = CATEGORY_LABELS[data.cat] || "";
-    document.getElementById("apply-link").href = data.u || "https://t.me/Jobs204";
-
-    const logoEl = document.getElementById("logo");
-    logoEl.textContent = "💼";
-    logoEl.style.display = "flex";
-    logoEl.style.alignItems = "center";
-    logoEl.style.justifyContent = "center";
-    logoEl.style.fontSize = "24px";
-  } else {
-    document.getElementById("title").textContent = "Job details unavailable";
-    document.getElementById("company").textContent = "Please open this from the channel post.";
+  function esc(s) {
+    return (s || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
+
+  function timeAgo(iso) {
+    if (!iso) return "";
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const hrs = Math.floor(diffMs / 3600000);
+    if (hrs < 1) return "just now";
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+  }
+
+  function renderFilters() {
+    const el = document.getElementById("filters");
+    const chips = [{ key: "all", label: "All" }, ...CATEGORY_ORDER.map(c => ({ key: c, label: CATEGORY_LABELS[c] }))];
+    el.innerHTML = chips.map(c =>
+      `<div class="chip ${c.key === activeFilter ? "active" : ""}" data-key="${c.key}">${c.label}</div>`
+    ).join("");
+    el.querySelectorAll(".chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        activeFilter = chip.dataset.key;
+        renderFilters();
+        renderList();
+      });
+    });
+  }
+
+  function renderList() {
+    const listEl = document.getElementById("list");
+    const jobs = activeFilter === "all" ? allJobs : allJobs.filter(j => j.category === activeFilter);
+
+    document.getElementById("count-label").textContent =
+      allJobs.length ? `${jobs.length} of ${allJobs.length} opportunities` : "No jobs available yet";
+
+    if (!jobs.length) {
+      listEl.innerHTML = `<div class="state-msg">No jobs in this category yet — check back soon.</div>`;
+      return;
+    }
+
+    listEl.innerHTML = jobs.map(job => {
+      const logo = job.company_logo
+        ? `<img class="job-logo" src="${esc(job.company_logo)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'job-logo',textContent:'💼'}))" />`
+        : `<div class="job-logo">💼</div>`;
+      const catLabel = CATEGORY_LABELS[job.category] || "💼 Job";
+      return `
+        <a class="job-card" href="details.html?startapp=${encodeURIComponent(btoa(JSON.stringify({
+          id: job.job_id, t: job.title, c: job.company, l: job.location,
+          u: job.job_url, cat: job.category, img: job.company_logo || ""
+        })))}">
+          ${logo}
+          <div class="job-info">
+            <div class="job-title">${esc(job.title)}</div>
+            <div class="job-company">${esc(job.company)}</div>
+            <div class="job-meta">
+              <span>📍 ${esc(job.location || "Remote")}</span>
+              <span class="dot">🌐 Remote</span>
+              <span class="dot">${esc(timeAgo(job.fetched_at))}</span>
+            </div>
+          </div>
+          <div class="job-cat-pill">${catLabel}</div>
+        </a>`;
+    }).join("");
+  }
+
+  async function loadJobs() {
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/linkedin_jobs?select=job_id,title,company,company_logo,location,job_url,category,fetched_at&order=fetched_at.desc&limit=200`,
+        {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+        }
+      );
+      if (!res.ok) throw new Error(`Supabase returned ${res.status}`);
+      allJobs = await res.json();
+    } catch (e) {
+      document.getElementById("count-label").textContent = "Couldn't load jobs";
+      document.getElementById("list").innerHTML = `<div class="state-msg">Failed to load jobs. Please try again shortly.</div>`;
+      return;
+    }
+    renderFilters();
+    renderList();
+  }
+
+  loadJobs();
 </script>
 </body>
 </html>
