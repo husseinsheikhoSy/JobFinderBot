@@ -5,14 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Job Details</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<!-- AdsGram SDK -->
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 <style>
   :root {
     --li-blue: #0a66c2;
     --li-blue-dark: #004182;
+    --li-blue-light: #eaf3fc;
     --li-bg: #f3f6f8;
     --li-white: #ffffff;
     --li-text: #191919;
     --li-muted: #56687a;
+    --li-border: #e3e9ee;
   }
   * { box-sizing: border-box; }
   body {
@@ -22,59 +26,140 @@
     color: var(--li-text);
     min-height: 100vh;
   }
+
+  /* ---------- Top bar ---------- */
   .topbar {
     background: linear-gradient(135deg, var(--li-blue), var(--li-blue-dark));
     color: #fff;
-    padding: 20px 18px 28px;
-    border-radius: 0 0 20px 20px;
+    padding: 16px 16px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
-  .topbar .brand { font-size: 13px; opacity: .85; letter-spacing: .5px; }
+  .topbar .title { font-size: 15px; font-weight: 700; }
+  .topbar .back { font-size: 20px; opacity: .9; cursor: pointer; }
+  .topbar .badge {
+    background: #fff; color: var(--li-blue-dark);
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px;
+  }
+
+  /* ---------- Card ---------- */
   .card {
     background: var(--li-white);
-    margin: -18px 14px 14px;
-    border-radius: 16px;
-    padding: 20px;
+    margin: -14px 14px 14px;
+    border-radius: 18px;
+    padding: 18px;
     box-shadow: 0 4px 18px rgba(10,102,194,.10);
   }
+  .job-head { display: flex; gap: 12px; align-items: flex-start; }
   .logo {
-    width: 52px; height: 52px; border-radius: 10px;
-    background: var(--li-bg);
+    width: 54px; height: 54px; border-radius: 12px; flex-shrink: 0;
+    background: var(--li-blue-light);
     display: flex; align-items: center; justify-content: center;
-    font-size: 22px; margin-bottom: 12px;
-    border: 1px solid #e3e9ee;
+    font-size: 22px;
+    border: 1px solid var(--li-border);
     object-fit: cover;
   }
-  h1 { font-size: 20px; margin: 4px 0 6px; line-height: 1.3; }
-  .company { color: var(--li-blue); font-weight: 600; font-size: 15px; margin-bottom: 10px; }
-  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  h1 { font-size: 18px; margin: 2px 0 4px; line-height: 1.3; }
+  .company { color: var(--li-blue); font-weight: 600; font-size: 14px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
   .pill {
-    background: #eaf3fc; color: var(--li-blue-dark);
-    padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    background: var(--li-blue-light); color: var(--li-blue-dark);
+    padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 600;
   }
-  .divider { height: 1px; background: #e9edf1; margin: 16px 0; }
-  .apply-btn {
-    display: block; text-align: center; text-decoration: none;
-    background: var(--li-blue); color: #fff; font-weight: 600;
-    padding: 14px; border-radius: 24px; font-size: 15px;
+  .divider { height: 1px; background: var(--li-border); margin: 16px 0; }
+
+  /* ---------- Timer / unlock section (mirrors the course-app pattern) ---------- */
+  .unlock-status {
+    text-align: center;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
+  .unlock-hint {
+    text-align: center;
+    color: var(--li-muted);
+    font-size: 12.5px;
+    margin-bottom: 18px;
+  }
+  .ring-wrap { display: flex; justify-content: center; margin: 10px 0 22px; }
+  .ring {
+    position: relative;
+    width: 116px; height: 116px;
+  }
+  .ring svg { transform: rotate(-90deg); width: 116px; height: 116px; }
+  .ring circle {
+    fill: none;
+    stroke-width: 8;
+  }
+  .ring .bg-circle { stroke: var(--li-border); }
+  .ring .fg-circle {
+    stroke: var(--li-blue);
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s linear;
+  }
+  .ring .count {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; font-weight: 700; color: var(--li-blue-dark);
+  }
+
+  .btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; text-align: center; text-decoration: none;
+    font-weight: 700; font-size: 15px;
+    padding: 14px; border-radius: 24px;
+    border: none; cursor: pointer;
+    margin-top: 10px;
+  }
+  .btn-ad {
+    background: linear-gradient(135deg, var(--li-blue), var(--li-blue-dark));
+    color: #fff;
     box-shadow: 0 4px 14px rgba(10,102,194,.30);
   }
-  .apply-btn:active { background: var(--li-blue-dark); }
+  .btn-ad:active { filter: brightness(.95); }
+  .btn-locked {
+    background: var(--li-blue-light);
+    color: var(--li-muted);
+    cursor: not-allowed;
+  }
+  .btn-apply {
+    background: var(--li-blue);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(10,102,194,.30);
+  }
+  .btn-apply:active { background: var(--li-blue-dark); }
+  .btn-all {
+    background: #fff;
+    color: var(--li-blue);
+    border: 1.5px solid var(--li-blue);
+  }
+
+  .hidden { display: none !important; }
+
   .footer {
     text-align: center; font-size: 12px; color: var(--li-muted);
     margin: 18px 0 8px;
   }
-  .footer a { color: var(--li-blue); text-decoration: none; }
+  .footer a { color: var(--li-blue); text-decoration: none; font-weight: 600; }
 </style>
 </head>
 <body>
   <div class="topbar">
-    <div class="brand">💼 JOBS204 · Remote Opportunities</div>
+    <span class="back" onclick="window.Telegram?.WebApp?.close && history.length>1 ? history.back() : window.Telegram?.WebApp?.close()">←</span>
+    <span class="title">💼 JOBS204 · Remote Opportunities</span>
+    <span class="badge">FREE</span>
   </div>
 
   <div class="card">
-    <img class="logo" id="logo" alt="" />
-    <h1 id="title">Loading…</h1>
-    <div class="company" id="company"></div>
+    <div class="job-head">
+      <img class="logo" id="logo" alt="" />
+      <div>
+        <h1 id="title">Loading…</h1>
+        <div class="company" id="company"></div>
+      </div>
+    </div>
 
     <div class="meta-row">
       <span class="pill" id="location-pill">📍 —</span>
@@ -84,8 +169,30 @@
 
     <div class="divider"></div>
 
-    <a class="apply-btn" id="apply-link" href="#" target="_blank">View on LinkedIn &amp; Apply →</a>
+    <!-- Locked state: AdsGram / timer gate, styled like the course-app unlock flow -->
+    <div id="locked-view">
+      <div class="unlock-status" id="unlock-status">Preparing your link…</div>
+      <div class="unlock-hint" id="unlock-hint">Please wait, or watch a quick ad to skip the wait.</div>
+
+      <div class="ring-wrap">
+        <div class="ring">
+          <svg viewBox="0 0 116 116">
+            <circle class="bg-circle" cx="58" cy="58" r="50"></circle>
+            <circle class="fg-circle" id="fg-circle" cx="58" cy="58" r="50"></circle>
+          </svg>
+          <div class="count" id="count">120</div>
+        </div>
+      </div>
+
+      <button class="btn btn-ad" id="skip-ad-btn">⚡ Skip with ad</button>
+      <button class="btn btn-locked" id="locked-btn" disabled>🔒 Wait for the timer to finish</button>
+    </div>
+
+    <!-- Unlocked state -->
+    <a class="btn btn-apply hidden" id="apply-link" href="#" target="_blank">View on LinkedIn &amp; Apply →</a>
   </div>
+
+  <a class="btn btn-all" id="view-all-btn" href="index.html">📋 View All Jobs</a>
 
   <div class="footer">
     Curated daily from LinkedIn · <a href="https://t.me/Jobs204" target="_blank">@Jobs204</a>
@@ -95,6 +202,10 @@
   const tg = window.Telegram?.WebApp;
   tg?.ready();
   tg?.expand();
+
+  // ---- Replace with your real AdsGram block id ----
+  const ADSGRAM_BLOCK_ID = "REPLACE_WITH_ADSGRAM_BLOCK_ID";
+  const WAIT_SECONDS = 120;
 
   function decodeStartParam(param) {
     try {
@@ -118,25 +229,100 @@
     software_eng: "💻 Software Eng",
   };
 
-  const data = startParam ? decodeStartParam(startParam) : null;
+  // "all" (or no payload) -> this is really a browse-all request, send to index.html
+  if (!startParam || startParam === "all") {
+    window.location.replace("index.html");
+  }
+
+  const data = startParam && startParam !== "all" ? decodeStartParam(startParam) : null;
+
+  let applyUrl = "https://t.me/Jobs204";
 
   if (data) {
     document.getElementById("title").textContent = data.t || "Job Opportunity";
     document.getElementById("company").textContent = data.c || "";
     document.getElementById("location-pill").textContent = "📍 " + (data.l || "Remote");
     document.getElementById("category-pill").textContent = CATEGORY_LABELS[data.cat] || "";
-    document.getElementById("apply-link").href = data.u || "https://t.me/Jobs204";
+    applyUrl = data.u || applyUrl;
+    document.getElementById("apply-link").href = applyUrl;
 
     const logoEl = document.getElementById("logo");
-    logoEl.textContent = "💼";
-    logoEl.style.display = "flex";
-    logoEl.style.alignItems = "center";
-    logoEl.style.justifyContent = "center";
-    logoEl.style.fontSize = "24px";
+    if (data.img) {
+      logoEl.src = data.img;
+      logoEl.onerror = () => { logoEl.removeAttribute("src"); logoEl.textContent = "💼"; };
+    } else {
+      logoEl.textContent = "💼";
+      logoEl.style.display = "flex";
+      logoEl.style.alignItems = "center";
+      logoEl.style.justifyContent = "center";
+      logoEl.style.fontSize = "22px";
+    }
   } else {
     document.getElementById("title").textContent = "Job details unavailable";
     document.getElementById("company").textContent = "Please open this from the channel post.";
   }
+
+  // ---------------- Countdown ring ----------------
+  const RADIUS = 50;
+  const CIRC = 2 * Math.PI * RADIUS;
+  const fgCircle = document.getElementById("fg-circle");
+  fgCircle.style.strokeDasharray = `${CIRC}`;
+  fgCircle.style.strokeDashoffset = `0`;
+
+  let remaining = WAIT_SECONDS;
+  const countEl = document.getElementById("count");
+  const statusEl = document.getElementById("unlock-status");
+  const hintEl = document.getElementById("unlock-hint");
+  let timerId = null;
+
+  function renderTick() {
+    countEl.textContent = remaining;
+    const progress = 1 - remaining / WAIT_SECONDS;
+    fgCircle.style.strokeDashoffset = `${CIRC * (1 - progress)}`;
+  }
+
+  function unlock() {
+    clearInterval(timerId);
+    document.getElementById("locked-view").classList.add("hidden");
+    document.getElementById("apply-link").classList.remove("hidden");
+  }
+
+  function startTimer() {
+    if (!data) return;
+    renderTick();
+    timerId = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        renderTick();
+        unlock();
+        return;
+      }
+      renderTick();
+    }, 1000);
+  }
+
+  if (data) startTimer();
+
+  // ---------------- AdsGram "skip the wait" ----------------
+  document.getElementById("skip-ad-btn").addEventListener("click", () => {
+    if (!data) return;
+    if (!window.Adsgram) {
+      statusEl.textContent = "Ad service unavailable — please wait for the timer.";
+      return;
+    }
+    const AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+    AdController.show()
+      .then(() => {
+        // Ad watched successfully -> unlock immediately
+        statusEl.textContent = "Unlocked!";
+        hintEl.textContent = "Thanks for supporting the channel.";
+        unlock();
+      })
+      .catch(() => {
+        // User closed/skipped the ad early -> keep waiting on the normal timer
+        hintEl.textContent = "Ad skipped — please wait for the timer, or try again.";
+      });
+  });
 </script>
 </body>
 </html>
