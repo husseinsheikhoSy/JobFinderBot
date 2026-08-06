@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Job Details</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root {
+    --li-blue: #0a66c2;
+    --li-blue-dark: #004182;
+    --li-bg: #f3f6f8;
+    --li-white: #ffffff;
+    --li-text: #191919;
+    --li-muted: #56687a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--li-bg);
+    color: var(--li-text);
+    min-height: 100vh;
+  }
+  .topbar {
+    background: linear-gradient(135deg, var(--li-blue), var(--li-blue-dark));
+    color: #fff;
+    padding: 20px 18px 28px;
+    border-radius: 0 0 20px 20px;
+  }
+  .topbar .brand { font-size: 13px; opacity: .85; letter-spacing: .5px; }
+  .card {
+    background: var(--li-white);
+    margin: -18px 14px 14px;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 18px rgba(10,102,194,.10);
+  }
+  .logo {
+    width: 52px; height: 52px; border-radius: 10px;
+    background: var(--li-bg);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; margin-bottom: 12px;
+    border: 1px solid #e3e9ee;
+    object-fit: cover;
+  }
+  h1 { font-size: 20px; margin: 4px 0 6px; line-height: 1.3; }
+  .company { color: var(--li-blue); font-weight: 600; font-size: 15px; margin-bottom: 10px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .pill {
+    background: #eaf3fc; color: var(--li-blue-dark);
+    padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;
+  }
+  .divider { height: 1px; background: #e9edf1; margin: 16px 0; }
+  .apply-btn {
+    display: block; text-align: center; text-decoration: none;
+    background: var(--li-blue); color: #fff; font-weight: 600;
+    padding: 14px; border-radius: 24px; font-size: 15px;
+    box-shadow: 0 4px 14px rgba(10,102,194,.30);
+  }
+  .apply-btn:active { background: var(--li-blue-dark); }
+  .footer {
+    text-align: center; font-size: 12px; color: var(--li-muted);
+    margin: 18px 0 8px;
+  }
+  .footer a { color: var(--li-blue); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">💼 JOBS204 · Remote Opportunities</div>
+  </div>
+
+  <div class="card">
+    <img class="logo" id="logo" alt="" />
+    <h1 id="title">Loading…</h1>
+    <div class="company" id="company"></div>
+
+    <div class="meta-row">
+      <span class="pill" id="location-pill">📍 —</span>
+      <span class="pill">🌐 Remote</span>
+      <span class="pill" id="category-pill"></span>
+    </div>
+
+    <div class="divider"></div>
+
+    <a class="apply-btn" id="apply-link" href="#" target="_blank">View on LinkedIn &amp; Apply →</a>
+  </div>
+
+  <div class="footer">
+    Curated daily from LinkedIn · <a href="https://t.me/Jobs204" target="_blank">@Jobs204</a>
+  </div>
+
+<script>
+  const tg = window.Telegram?.WebApp;
+  tg?.ready();
+  tg?.expand();
+
+  function decodeStartParam(param) {
+    try {
+      let b64 = param.replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      return JSON.parse(atob(b64));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  const startParam = tg?.initDataUnsafe?.start_param
+    || new URLSearchParams(window.location.search).get("startapp")
+    || new URLSearchParams(window.location.search).get("tgWebAppStartParam");
+
+  const CATEGORY_LABELS = {
+    python: "🐍 Python",
+    ai_ml: "🤖 AI & ML",
+    data_science: "📊 Data Science",
+    web_dev: "🌐 Web Dev",
+    software_eng: "💻 Software Eng",
+  };
+
+  const data = startParam ? decodeStartParam(startParam) : null;
+
+  if (data) {
+    document.getElementById("title").textContent = data.t || "Job Opportunity";
+    document.getElementById("company").textContent = data.c || "";
+    document.getElementById("location-pill").textContent = "📍 " + (data.l || "Remote");
+    document.getElementById("category-pill").textContent = CATEGORY_LABELS[data.cat] || "";
+    document.getElementById("apply-link").href = data.u || "https://t.me/Jobs204";
+
+    const logoEl = document.getElementById("logo");
+    logoEl.textContent = "💼";
+    logoEl.style.display = "flex";
+    logoEl.style.alignItems = "center";
+    logoEl.style.justifyContent = "center";
+    logoEl.style.fontSize = "24px";
+  } else {
+    document.getElementById("title").textContent = "Job details unavailable";
+    document.getElementById("company").textContent = "Please open this from the channel post.";
+  }
+</script>
+</body>
+</html>
