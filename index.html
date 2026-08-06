@@ -121,6 +121,22 @@
   tg?.ready();
   tg?.expand();
 
+  // ---------------------------------------------------------------
+  // Telegram always opens the ONE Mini App URL registered in BotFather
+  // (this page), no matter which button was tapped — it only passes
+  // start_param along, it never switches which file loads. So this
+  // page has to act as the router: if the start_param carries a
+  // specific job payload (not "all"/empty), hand off to details.html
+  // right away, before doing anything else on this page.
+  // ---------------------------------------------------------------
+  const routerStartParam = tg?.initDataUnsafe?.start_param
+    || new URLSearchParams(window.location.search).get("startapp")
+    || new URLSearchParams(window.location.search).get("tgWebAppStartParam");
+
+  if (routerStartParam && routerStartParam !== "all") {
+    window.location.replace(`details.html?startapp=${encodeURIComponent(routerStartParam)}`);
+  }
+
   // Public (read-only) Supabase credentials — safe to expose client-side,
   // RLS on linkedin_jobs only allows SELECT with this key.
   const SUPABASE_URL = "https://yfgklalkjldbcykczezt.supabase.co";
@@ -137,6 +153,10 @@
 
   let allJobs = [];
   let activeFilter = "all";
+
+  function normCategory(c) {
+    return (c || "").toString().trim().toLowerCase();
+  }
 
   function esc(s) {
     return (s || "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -168,7 +188,7 @@
 
   function renderList() {
     const listEl = document.getElementById("list");
-    const jobs = activeFilter === "all" ? allJobs : allJobs.filter(j => j.category === activeFilter);
+    const jobs = activeFilter === "all" ? allJobs : allJobs.filter(j => normCategory(j.category) === activeFilter);
 
     document.getElementById("count-label").textContent =
       allJobs.length ? `${jobs.length} of ${allJobs.length} opportunities` : "No jobs available yet";
@@ -225,7 +245,9 @@
     renderList();
   }
 
-  loadJobs();
+  if (!(routerStartParam && routerStartParam !== "all")) {
+    loadJobs();
+  }
 </script>
 </body>
 </html>
