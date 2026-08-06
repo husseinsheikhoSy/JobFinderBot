@@ -221,9 +221,20 @@
     }
   }
 
-  const startParam = tg?.initDataUnsafe?.start_param
-    || new URLSearchParams(window.location.search).get("startapp")
-    || new URLSearchParams(window.location.search).get("tgWebAppStartParam");
+  // index.html always normalizes the launch payload into an explicit
+  // ?startapp=... query param before sending the user here — both on
+  // the very first deep-link entry AND on every in-app job-card click.
+  // tg.initDataUnsafe.start_param, however, is fixed for the whole Mini
+  // App session (it's whatever the app was FIRST opened with) and does
+  // NOT update on in-app navigation. Reading it first meant clicking a
+  // job after entering via "View All Jobs" (start_param="all") always
+  // looked like startParam==="all" here, bouncing straight back to
+  // index.html. Read the URL first; only fall back to the Telegram
+  // value if the URL genuinely has nothing (e.g. a raw hash-based
+  // launch that never passed through index.html's redirect).
+  const startParam = new URLSearchParams(window.location.search).get("startapp")
+    || new URLSearchParams(window.location.search).get("tgWebAppStartParam")
+    || tg?.initDataUnsafe?.start_param;
 
   const CATEGORY_LABELS = {
     python: "🐍 Python",
