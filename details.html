@@ -147,7 +147,7 @@
 </head>
 <body>
   <div class="topbar">
-    <span class="back" onclick="window.Telegram?.WebApp?.close && history.length>1 ? history.back() : window.Telegram?.WebApp?.close()">←</span>
+    <span class="back" onclick="goBack()">←</span>
     <span class="title">💼 JOBS204 · Remote Opportunities</span>
     <span class="badge">FREE</span>
   </div>
@@ -203,6 +203,19 @@
   const tg = window.Telegram?.WebApp;
   tg?.ready();
   tg?.expand();
+
+  // Opening a job straight from a channel post (not by browsing the
+  // in-app list) means details.html is the FIRST page of this webview
+  // session — there's no in-app history to go back to. Closing the
+  // whole Mini App in that case is jarring; send the user to the job
+  // list instead so "back" always feels like going back, never exiting.
+  function goBack() {
+    if (history.length > 1) {
+      history.back();
+    } else {
+      window.location.href = "index.html";
+    }
+  }
 
   // ---- Replace with your real AdsGram block id ----
   const ADSGRAM_BLOCK_ID = "41465";
