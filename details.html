@@ -7,145 +7,51 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- AdsGram SDK -->
 <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
 <style>
-  :root {
-    --li-blue: #0a66c2;
-    --li-blue-dark: #004182;
-    --li-blue-light: #eaf3fc;
-    --li-bg: #f3f6f8;
-    --li-white: #ffffff;
-    --li-text: #191919;
-    --li-muted: #56687a;
-    --li-border: #e3e9ee;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-    background: var(--li-bg);
-    color: var(--li-text);
-    min-height: 100vh;
-  }
-
-  /* ---------- Top bar ---------- */
-  .topbar {
-    background: linear-gradient(135deg, var(--li-blue), var(--li-blue-dark));
-    color: #fff;
-    padding: 16px 16px 22px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .topbar .title { font-size: 15px; font-weight: 700; }
-  .topbar .back { font-size: 20px; opacity: .9; cursor: pointer; }
-  .topbar .badge {
-    background: #fff; color: var(--li-blue-dark);
-    font-size: 11px; font-weight: 700;
-    padding: 4px 10px; border-radius: 20px;
-  }
-
-  /* ---------- Card ---------- */
-  .card {
-    background: var(--li-white);
-    margin: -14px 14px 14px;
-    border-radius: 18px;
-    padding: 18px;
-    box-shadow: 0 4px 18px rgba(10,102,194,.10);
-  }
-  .job-head { display: flex; gap: 12px; align-items: flex-start; }
-  .logo {
-    width: 54px; height: 54px; border-radius: 12px; flex-shrink: 0;
-    background: var(--li-blue-light);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
-    border: 1px solid var(--li-border);
-    object-fit: cover;
-  }
-  h1 { font-size: 18px; margin: 2px 0 4px; line-height: 1.3; }
-  .company { color: var(--li-blue); font-weight: 600; font-size: 14px; }
-  .meta-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 4px; }
-  .pill {
-    background: var(--li-blue-light); color: var(--li-blue-dark);
-    padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 600;
-  }
-  .divider { height: 1px; background: var(--li-border); margin: 16px 0; }
-
-  /* ---------- Timer / unlock section (mirrors the course-app pattern) ---------- */
-  .unlock-status {
-    text-align: center;
-    font-weight: 700;
-    font-size: 15px;
-    margin-bottom: 4px;
-  }
-  .unlock-hint {
-    text-align: center;
-    color: var(--li-muted);
-    font-size: 12.5px;
-    margin-bottom: 18px;
-  }
-  .ring-wrap { display: flex; justify-content: center; margin: 10px 0 22px; }
-  .ring {
-    position: relative;
-    width: 116px; height: 116px;
-  }
-  .ring svg { transform: rotate(-90deg); width: 116px; height: 116px; }
-  .ring circle {
-    fill: none;
-    stroke-width: 8;
-  }
-  .ring .bg-circle { stroke: var(--li-border); }
-  .ring .fg-circle {
-    stroke: var(--li-blue);
-    stroke-linecap: round;
-    transition: stroke-dashoffset 1s linear;
-  }
-  .ring .count {
-    position: absolute; inset: 0;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 30px; font-weight: 700; color: var(--li-blue-dark);
-  }
-
-  .btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    width: 100%; text-align: center; text-decoration: none;
-    font-weight: 700; font-size: 15px;
-    padding: 14px; border-radius: 24px;
-    border: none; cursor: pointer;
-    margin-top: 10px;
-  }
-  .btn-ad {
-    background: linear-gradient(135deg, var(--li-blue), var(--li-blue-dark));
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(10,102,194,.30);
-  }
-  .btn-ad:active { filter: brightness(.95); }
-  .btn-locked {
-    background: var(--li-blue-light);
-    color: var(--li-muted);
-    cursor: not-allowed;
-  }
-  .btn-apply {
-    background: var(--li-blue);
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(10,102,194,.30);
-  }
-  .btn-apply:active { background: var(--li-blue-dark); }
-  .btn-all {
-    background: #fff;
-    color: var(--li-blue);
-    border: 1.5px solid var(--li-blue);
-  }
-
-  .hidden { display: none !important; }
-
-  .footer {
-    text-align: center; font-size: 12px; color: var(--li-muted);
-    margin: 18px 0 8px;
-  }
-  .footer a { color: var(--li-blue); text-decoration: none; font-weight: 600; }
+:root{--bg:#09090b;--surface:#17171b;--surface2:#1e1e23;--text:#f8f5f6;--muted:#aaa3a7;
+--border:rgba(255,255,255,.09);--wine:#7b1733;--wine2:#a51f46;--rose:#d96a88;--gold:#d8ad67;
+--success:#56c596;--shadow:0 24px 70px rgba(0,0,0,.45);--shadow-wine:0 14px 38px rgba(123,23,51,.28)}
+*,*::before,*::after{box-sizing:border-box}
+html{background:var(--bg);min-height:100%;-webkit-text-size-adjust:100%}
+body{margin:0;min-height:100dvh;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,Arial,sans-serif;
+background:radial-gradient(circle at 50% -15%,rgba(165,31,70,.24),transparent 38%),radial-gradient(circle at 100% 35%,rgba(123,23,51,.12),transparent 30%),linear-gradient(180deg,#08080a,#0d0d10 48%,#08080a);
+-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,black,transparent 70%);-webkit-mask-image:linear-gradient(to bottom,black,transparent 70%)}
+.app-shell{width:100%;max-width:470px;min-height:100dvh;margin:0 auto;background:var(--surface);position:relative;box-shadow:var(--shadow);overflow-y:auto}
+.topbar{min-height:94px;padding:16px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden;
+background:radial-gradient(circle at 82% 18%,rgba(217,106,136,.20),transparent 27%),radial-gradient(circle at 12% 65%,rgba(165,31,70,.28),transparent 35%),linear-gradient(135deg,#240914,#100b0e 56%,#08080a);border-bottom:1px solid rgba(255,255,255,.07)}
+.topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--wine2),transparent)}
+.back{width:38px;height:38px;flex:0 0 38px;border:1px solid rgba(255,255,255,.10);border-radius:50%;background:rgba(255,255,255,.07);color:#fff;
+font-size:18px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.topbar .title{font-size:13px;font-weight:900;letter-spacing:.2px;flex:1;min-width:0;position:relative;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .badge{position:relative;z-index:1;background:rgba(216,173,103,.10);color:#e8c989;border:1px solid rgba(216,173,103,.32);font-size:9px;font-weight:900;padding:7px 10px;border-radius:999px}
+.card{background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));margin:12px 14px 10px;border:1px solid var(--border);border-radius:20px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.20)}
+.job-head{display:flex;gap:12px;align-items:flex-start}
+.logo{width:62px;height:62px;border-radius:15px;flex-shrink:0;background:linear-gradient(145deg,var(--wine2),#390d1c);display:flex;align-items:center;justify-content:center;font-size:25px;border:1px solid rgba(217,106,136,.24);box-shadow:var(--shadow-wine);object-fit:cover}
+h1{font-size:16px;margin:2px 0 5px;line-height:1.35;color:#f6f2f3}
+.company{color:#ef9ab0;font-weight:800;font-size:11px}
+.meta-row{display:flex;flex-wrap:wrap;gap:7px;margin:15px 0 3px}
+.pill{background:rgba(255,255,255,.055);color:#bdb7ba;border:1px solid var(--border);padding:5px 9px;border-radius:999px;font-size:9.5px;font-weight:800}
+.divider{height:1px;background:var(--border);margin:16px 0}
+.unlock-status{text-align:center;font-weight:900;font-size:15px;margin-bottom:4px;color:#fff}
+.unlock-hint{text-align:center;color:var(--muted);font-size:10.5px;margin-bottom:15px;line-height:1.5}
+.ring-wrap{display:flex;justify-content:center;margin:10px 0 19px}.ring{position:relative;width:116px;height:116px}.ring svg{transform:rotate(-90deg);width:116px;height:116px}
+.ring circle{fill:none;stroke-width:8}.ring .bg-circle{stroke:rgba(255,255,255,.08)}.ring .fg-circle{stroke:var(--rose);stroke-linecap:round;transition:stroke-dashoffset 1s linear}
+.ring .count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:29px;font-weight:900;color:#fff}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;text-align:center;text-decoration:none;font-weight:900;font-size:12px;padding:12px;border-radius:13px;border:none;cursor:pointer;margin-top:9px;touch-action:manipulation}
+.btn-ad{background:linear-gradient(135deg,var(--wine2),var(--wine));color:#fff;box-shadow:0 8px 22px rgba(123,23,51,.28)}
+.btn-locked{background:rgba(255,255,255,.055);color:#777175;border:1px solid var(--border);cursor:not-allowed}
+.btn-apply{background:linear-gradient(135deg,var(--wine2),var(--wine));color:#fff;box-shadow:0 8px 22px rgba(123,23,51,.28)}
+.btn-all{margin:0 14px 10px;width:calc(100% - 28px);background:rgba(255,255,255,.035);color:var(--rose);border:1px solid rgba(165,31,70,.40)}
+.hidden{display:none!important}
+.footer{text-align:center;font-size:10px;color:var(--muted);padding:4px 16px 22px;background:#111114}.footer a{color:var(--rose);text-decoration:none;font-weight:800}
+@media(min-width:481px){body{padding:24px 14px 40px}.app-shell{border-radius:28px;min-height:0}}
 </style>
+
 </head>
 <body>
+<div class="app-shell">
   <div class="topbar">
     <span class="back" onclick="goBack()">←</span>
     <span class="title">💼 JOBS204 · Remote Opportunities</span>
@@ -199,6 +105,7 @@
     Curated daily from LinkedIn · <a href="https://t.me/Jobs204" target="_blank">@Jobs204</a>
   </div>
 
+</div>
 <script>
   const tg = window.Telegram?.WebApp;
   tg?.ready();
@@ -218,8 +125,9 @@
   }
 
   // ---- Replace with your real AdsGram block id ----
-  const ADSGRAM_BLOCK_ID = "41465";
+  const ADSGRAM_BLOCK_ID = "46764";
   const WAIT_SECONDS = 99;
+  const ADSGRAM_INTERSTITIAL_2 = "46766";
 
   function decodeStartParam(param) {
     try {
