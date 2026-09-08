@@ -7,48 +7,842 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <!-- AdsGram SDK -->
 <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-
 <style>
-:root{--bg:#09090b;--surface:#17171b;--surface2:#1e1e23;--text:#f8f5f6;--muted:#aaa3a7;
---border:rgba(255,255,255,.09);--wine:#7b1733;--wine2:#a51f46;--rose:#d96a88;--gold:#d8ad67;
---success:#56c596;--shadow:0 24px 70px rgba(0,0,0,.45);--shadow-wine:0 14px 38px rgba(123,23,51,.28)}
-*,*::before,*::after{box-sizing:border-box}
-html{background:var(--bg);min-height:100%;-webkit-text-size-adjust:100%}
-body{margin:0;min-height:100dvh;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,Arial,sans-serif;
-background:radial-gradient(circle at 50% -15%,rgba(165,31,70,.24),transparent 38%),radial-gradient(circle at 100% 35%,rgba(123,23,51,.12),transparent 30%),linear-gradient(180deg,#08080a,#0d0d10 48%,#08080a);
--webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
-body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:34px 34px;mask-image:linear-gradient(to bottom,black,transparent 70%);-webkit-mask-image:linear-gradient(to bottom,black,transparent 70%)}
-.app-shell{width:100%;max-width:470px;min-height:100dvh;margin:0 auto;background:var(--surface);position:relative;box-shadow:var(--shadow);overflow-y:auto}
-.topbar{min-height:94px;padding:16px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden;
-background:radial-gradient(circle at 82% 18%,rgba(217,106,136,.20),transparent 27%),radial-gradient(circle at 12% 65%,rgba(165,31,70,.28),transparent 35%),linear-gradient(135deg,#240914,#100b0e 56%,#08080a);border-bottom:1px solid rgba(255,255,255,.07)}
-.topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:linear-gradient(90deg,transparent,var(--wine2),transparent)}
-.back{width:38px;height:38px;flex:0 0 38px;border:1px solid rgba(255,255,255,.10);border-radius:50%;background:rgba(255,255,255,.07);color:#fff;
-font-size:18px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
-.topbar .title{font-size:13px;font-weight:900;letter-spacing:.2px;flex:1;min-width:0;position:relative;z-index:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.topbar .badge{position:relative;z-index:1;background:rgba(216,173,103,.10);color:#e8c989;border:1px solid rgba(216,173,103,.32);font-size:9px;font-weight:900;padding:7px 10px;border-radius:999px}
-.card{background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));margin:12px 14px 10px;border:1px solid var(--border);border-radius:20px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.20)}
-.job-head{display:flex;gap:12px;align-items:flex-start}
-.logo{width:62px;height:62px;border-radius:15px;flex-shrink:0;background:linear-gradient(145deg,var(--wine2),#390d1c);display:flex;align-items:center;justify-content:center;font-size:25px;border:1px solid rgba(217,106,136,.24);box-shadow:var(--shadow-wine);object-fit:cover}
-h1{font-size:16px;margin:2px 0 5px;line-height:1.35;color:#f6f2f3}
-.company{color:#ef9ab0;font-weight:800;font-size:11px}
-.meta-row{display:flex;flex-wrap:wrap;gap:7px;margin:15px 0 3px}
-.pill{background:rgba(255,255,255,.055);color:#bdb7ba;border:1px solid var(--border);padding:5px 9px;border-radius:999px;font-size:9.5px;font-weight:800}
-.divider{height:1px;background:var(--border);margin:16px 0}
-.unlock-status{text-align:center;font-weight:900;font-size:15px;margin-bottom:4px;color:#fff}
-.unlock-hint{text-align:center;color:var(--muted);font-size:10.5px;margin-bottom:15px;line-height:1.5}
-.ring-wrap{display:flex;justify-content:center;margin:10px 0 19px}.ring{position:relative;width:116px;height:116px}.ring svg{transform:rotate(-90deg);width:116px;height:116px}
-.ring circle{fill:none;stroke-width:8}.ring .bg-circle{stroke:rgba(255,255,255,.08)}.ring .fg-circle{stroke:var(--rose);stroke-linecap:round;transition:stroke-dashoffset 1s linear}
-.ring .count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:29px;font-weight:900;color:#fff}
-.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;text-align:center;text-decoration:none;font-weight:900;font-size:12px;padding:12px;border-radius:13px;border:none;cursor:pointer;margin-top:9px;touch-action:manipulation}
-.btn-ad{background:linear-gradient(135deg,var(--wine2),var(--wine));color:#fff;box-shadow:0 8px 22px rgba(123,23,51,.28)}
-.btn-locked{background:rgba(255,255,255,.055);color:#777175;border:1px solid var(--border);cursor:not-allowed}
-.btn-apply{background:linear-gradient(135deg,var(--wine2),var(--wine));color:#fff;box-shadow:0 8px 22px rgba(123,23,51,.28)}
-.btn-all{margin:0 14px 10px;width:calc(100% - 28px);background:rgba(255,255,255,.035);color:var(--rose);border:1px solid rgba(165,31,70,.40)}
-.hidden{display:none!important}
-.footer{text-align:center;font-size:10px;color:var(--muted);padding:4px 16px 22px;background:#111114}.footer a{color:var(--rose);text-decoration:none;font-weight:800}
-@media(min-width:481px){body{padding:24px 14px 40px}.app-shell{border-radius:28px;min-height:0}}
+  :root {
+    --bg: #09090b;
+    --bg-soft: #111114;
+    --surface: #17171b;
+    --surface-2: #1e1e23;
+    --surface-3: #24242a;
+    --text: #f8f5f6;
+    --text-muted: #aaa3a7;
+    --border: rgba(255,255,255,.09);
+    --wine: #7b1733;
+    --wine-bright: #a51f46;
+    --wine-soft: rgba(165,31,70,.14);
+    --wine-glow: rgba(165,31,70,.34);
+    --rose: #d96a88;
+    --gold: #d8ad67;
+    --success: #56c596;
+    --danger: #d95368;
+    --radius-xl: 28px;
+    --radius-lg: 20px;
+    --radius-md: 15px;
+    --shadow: 0 24px 70px rgba(0,0,0,.45);
+    --shadow-wine: 0 14px 38px rgba(123,23,51,.28);
+    --tg-viewport-height: 100vh;
+    --tg-safe-area-inset-top: 0px;
+    --tg-safe-area-inset-bottom: 0px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { 
+    background: var(--bg); 
+    scroll-behavior: smooth; 
+    height: 100%;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    min-height: 100%;
+    height: 100%;
+    background:
+      radial-gradient(circle at 50% -15%, rgba(165,31,70,.24), transparent 38%),
+      radial-gradient(circle at 100% 35%, rgba(123,23,51,.12), transparent 30%),
+      linear-gradient(180deg, #08080a 0%, #0d0d10 48%, #08080a 100%);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+    background-size: 34px 34px;
+    mask-image: linear-gradient(to bottom, black, transparent 70%);
+    -webkit-mask-image: linear-gradient(to bottom, black, transparent 70%);
+  }
+
+  .app-shell {
+    width: 100%;
+    max-width: 470px;
+    position: relative;
+    background: var(--surface);
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 0;
+    box-shadow: var(--shadow);
+    min-height: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  @media (min-width: 481px) {
+    body { 
+      padding: 24px 14px 40px; 
+      min-height: 100vh;
+      height: auto;
+    }
+    .app-shell {
+      max-width: 470px;
+      border-radius: var(--radius-xl);
+      min-height: auto;
+      height: auto;
+      max-height: calc(var(--tg-viewport-height, 100vh) - 48px);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .app-shell {
+      max-width: 100%;
+      border-radius: 0;
+      border: 0;
+      box-shadow: none;
+      min-height: 100%;
+      height: 100%;
+    }
+  }
+
+  /* ───────── Header ───────── */
+  .header-bar {
+    min-height: 188px;
+    padding: calc(18px + var(--tg-safe-area-inset-top, 0px)) 18px 82px;
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 82% 18%, rgba(217,106,136,.20), transparent 27%),
+      radial-gradient(circle at 12% 65%, rgba(165,31,70,.28), transparent 35%),
+      linear-gradient(135deg, #240914 0%, #100b0e 56%, #08080a 100%);
+    flex-shrink: 0;
+  }
+
+  .header-bar::before {
+    content: "";
+    position: absolute;
+    width: 230px;
+    height: 230px;
+    right: -100px;
+    top: -105px;
+    border: 1px solid rgba(217,106,136,.18);
+    border-radius: 50%;
+    box-shadow:
+      0 0 0 28px rgba(217,106,136,.025),
+      0 0 0 56px rgba(217,106,136,.018);
+  }
+
+  .header-bar::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--wine-bright), transparent);
+  }
+
+  .back-btn {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: .2s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .back-btn:hover { background: rgba(255,255,255,.13); transform: translateX(-2px); }
+  .back-btn:active { transform: scale(.92); }
+
+  .logo-text {
+    flex: 1;
+    min-width: 0;
+    padding-top: 8px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: .2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .badge-free {
+    padding: 7px 11px;
+    border: 1px solid rgba(216,173,103,.32);
+    border-radius: 999px;
+    background: rgba(216,173,103,.10);
+    color: #e8c989;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .8px;
+    box-shadow: 0 0 22px rgba(216,173,103,.07);
+    flex-shrink: 0;
+  }
+
+  /* ───────── Main sheet ───────── */
+  .card {
+    display: none;
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    margin: -58px 0 0;
+    padding: 24px 18px 20px;
+    border-radius: 30px 30px 0 0;
+    background:
+      linear-gradient(180deg, rgba(30,30,35,.99), rgba(16,16,19,.99));
+    border-top: 1px solid rgba(255,255,255,.09);
+    animation: sheetIn .45s cubic-bezier(.22,.61,.36,1) both;
+    flex-shrink: 0;
+  }
+
+  .card.visible { display: block; }
+
+  @keyframes sheetIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ───────── Course hero ───────── */
+  .course-info {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    padding: 0 0 19px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .course-thumb {
+    width: 76px;
+    height: 76px;
+    flex: 0 0 76px;
+    border-radius: 18px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      linear-gradient(145deg, var(--wine-bright), #390d1c);
+    border: 1px solid rgba(217,106,136,.24);
+    box-shadow: var(--shadow-wine);
+    font-size: 28px;
+  }
+
+  .course-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .course-meta { min-width: 0; flex: 1; }
+
+  .course-title {
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.35;
+    font-weight: 800;
+    letter-spacing: -.15px;
+    margin-bottom: 8px;
+  }
+
+  .course-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,.055);
+    border: 1px solid var(--border);
+    color: #bdb7ba;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: .25px;
+  }
+
+  .tag.free-tag {
+    background: var(--wine-soft);
+    border-color: rgba(165,31,70,.35);
+    color: #ef9ab0;
+  }
+
+  .course-price {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .course-price s { color: #777175; }
+
+  .course-price .free {
+    margin-left: 4px;
+    color: var(--gold);
+    font-weight: 800;
+  }
+
+  .course-meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    margin-top: 9px;
+    color: var(--text-muted);
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+
+  .course-meta-row span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .course-meta-row .star { color: var(--gold); }
+
+  /* ───────── Benefits ───────── */
+  .feature-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+
+  .feature-item {
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(255,255,255,.025);
+    color: #d8d3d5;
+    font-size: 10.5px;
+    line-height: 1.3;
+    font-weight: 650;
+  }
+
+  .feature-check {
+    width: 21px;
+    height: 21px;
+    flex: 0 0 21px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 7px;
+    background: var(--wine-soft);
+    border: 1px solid rgba(165,31,70,.35);
+    color: #e58ba3;
+    font-size: 11px;
+    font-weight: 900;
+  }
+
+  /* ───────── Unlock heading ───────── */
+  .unlock-headline {
+    text-align: center;
+    padding: 2px 8px 15px;
+  }
+
+  .unlock-headline h2 {
+    color: #fff;
+    font-size: 19px;
+    line-height: 1.25;
+    font-weight: 900;
+    letter-spacing: -.35px;
+  }
+
+  .unlock-headline h2::after {
+    content: "";
+    display: block;
+    width: 42px;
+    height: 2px;
+    margin: 10px auto 0;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--wine), var(--rose));
+  }
+
+  .unlock-headline p {
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .ad-notice {
+    margin-bottom: 14px;
+    padding: 11px 13px;
+    border: 1px solid rgba(165,31,70,.25);
+    border-radius: 13px;
+    background: linear-gradient(135deg, rgba(165,31,70,.11), rgba(255,255,255,.025));
+    color: #d8cbd0;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.5;
+    font-weight: 650;
+  }
+
+  /* ───────── Progress ───────── */
+  .progress-wrap {
+    margin-bottom: 14px;
+  }
+
+  .progress-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,.08);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--wine-bright), var(--rose));
+    border-radius: 3px;
+    transition: width .4s ease;
+  }
+
+  .progress-label {
+    display: block;
+    text-align: center;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  /* ───────── Steps ───────── */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .step {
+    position: relative;
+    min-height: 128px;
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 17px;
+    background: linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.018));
+    transition: .25s ease;
+  }
+
+  .step:hover:not(.locked):not(.done) {
+    border-color: rgba(165,31,70,.38);
+    box-shadow: 0 12px 34px rgba(0,0,0,.22);
+    transform: translateY(-1px);
+  }
+
+  .step.locked { opacity: .42; }
+
+  .step.done {
+    border-color: rgba(86,197,150,.30);
+    background: linear-gradient(145deg, rgba(86,197,150,.08), rgba(255,255,255,.02));
+  }
+
+  .step-num {
+    grid-row: 1 / span 2;
+    width: 44px;
+    height: 44px;
+    align-self: center;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--wine-soft);
+    border: 1px solid rgba(165,31,70,.30);
+    color: #e58ba3;
+    font-size: 17px;
+    font-weight: 900;
+  }
+
+  .step.done .step-num {
+    background: rgba(86,197,150,.12);
+    border-color: rgba(86,197,150,.30);
+    color: #78ddb3;
+  }
+
+  .step-title {
+    align-self: end;
+    color: #f6f2f3;
+    font-size: 13px;
+    font-weight: 850;
+  }
+
+  .step-sub {
+    align-self: start;
+    margin-top: 4px;
+    margin-bottom: 9px;
+    color: var(--text-muted);
+    font-size: 10px;
+    line-height: 1.35;
+  }
+
+  .step-btn {
+    grid-column: 2;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid rgba(165,31,70,.40);
+    border-radius: 11px;
+    background: linear-gradient(135deg, var(--wine-bright), var(--wine));
+    color: #fff;
+    font-size: 11px;
+    font-weight: 850;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(123,23,51,.22);
+    transition: .18s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .step-btn:hover:not(:disabled) {
+    filter: brightness(1.12);
+    box-shadow: 0 10px 25px rgba(165,31,70,.32);
+  }
+
+  .step-btn:active:not(:disabled) { transform: scale(.97); }
+
+  .step-btn:disabled {
+    background: rgba(255,255,255,.06);
+    border-color: var(--border);
+    color: #817b7e;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .step-btn.watching {
+    background: linear-gradient(135deg, #4d1023, #2b0b16);
+    pointer-events: none;
+  }
+
+  /* ───────── CTA ───────── */
+  .cta-btn {
+    width: 100%;
+    min-height: 54px;
+    border: 1px solid transparent;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: .22s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .cta-btn.locked {
+    background: rgba(255,255,255,.055);
+    border-color: var(--border);
+    color: #7d777a;
+    cursor: not-allowed;
+  }
+
+  .cta-btn.unlocked {
+    color: #fff;
+    border-color: rgba(217,106,136,.35);
+    background: linear-gradient(135deg, #a51f46 0%, #741631 100%);
+    box-shadow: 0 13px 32px rgba(123,23,51,.38);
+    animation: winePulse 2.6s infinite;
+  }
+
+  .cta-btn.unlocked:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+  }
+
+  @keyframes winePulse {
+    0%,100% { box-shadow: 0 13px 32px rgba(123,23,51,.34), 0 0 0 0 rgba(165,31,70,.30); }
+    50% { box-shadow: 0 13px 32px rgba(123,23,51,.34), 0 0 0 8px rgba(165,31,70,0); }
+  }
+
+  /* ───────── AdsGram task ───────── */
+  adsgram-task.task {
+    display: block;
+    margin-top: 13px;
+    padding: 11px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: rgba(255,255,255,.025);
+    box-shadow: none;
+    --adsgram-task-font-size: 13px;
+    --adsgram-task-icon-size: 42px;
+    --adsgram-task-icon-title-gap: 11px;
+    --adsgram-task-icon-border-radius: 10px;
+    --adsgram-task-button-width: 82px;
+  }
+
+  .success-msg {
+    display: none;
+    margin-top: 12px;
+    padding: 11px 14px;
+    border: 1px solid rgba(86,197,150,.25);
+    border-radius: 13px;
+    background: rgba(86,197,150,.07);
+    color: #91d9ba;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    animation: fadeIn .35s ease;
+  }
+
+  .success-msg.visible { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ───────── Latest courses ───────── */
+  .latest-section {
+    padding: 19px 18px 8px;
+    background: #111114;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .latest-heading {
+    margin-bottom: 11px;
+    color: #eee9eb;
+    font-size: 12px;
+    font-weight: 850;
+  }
+
+  .latest-list {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .latest-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: rgba(255,255,255,.025);
+    cursor: pointer;
+    transition: .18s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .latest-card:hover {
+    border-color: rgba(165,31,70,.28);
+    background: rgba(165,31,70,.06);
+  }
+
+  .latest-card:active { transform: scale(.985); }
+
+  .latest-thumb {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    overflow: hidden;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, var(--wine), #310b19);
+    font-size: 20px;
+  }
+
+  .latest-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+  .latest-body { min-width: 0; flex: 1; }
+
+  .latest-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    color: #d9d3d5;
+    font-size: 11px;
+    line-height: 1.35;
+    font-weight: 700;
+  }
+
+  .latest-tag {
+    display: inline-block;
+    margin-top: 5px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: var(--wine-soft);
+    color: #c98298;
+    font-size: 8.5px;
+    font-weight: 800;
+  }
+
+  /* ───────── Footer ───────── */
+  .footer-link {
+    padding: 10px 18px calc(20px + var(--tg-safe-area-inset-bottom, 0px));
+    background: #111114;
+    flex-shrink: 0;
+  }
+
+  .whatsapp-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    background: rgba(255,255,255,.035);
+    color: #c8c2c5;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 800;
+    transition: .18s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .whatsapp-btn:hover {
+    background: rgba(255,255,255,.065);
+    color: #fff;
+  }
+
+  .whatsapp-btn:active { transform: scale(.98); }
+
+  /* ───────── Skeleton ───────── */
+  .skeleton {
+    display: none;
+    width: 100%;
+    margin: -58px 0 0;
+    padding: 24px 18px;
+    position: relative;
+    z-index: 2;
+    border-radius: 30px 30px 0 0;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .skeleton.visible { display: block; }
+
+  .skel-line {
+    margin-bottom: 10px;
+    border-radius: 7px;
+    background: linear-gradient(90deg, #1d1d21 25%, #29292f 50%, #1d1d21 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .skel-thumb {
+    width: 70px;
+    height: 70px;
+    border-radius: 14px;
+    flex-shrink: 0;
+  }
+
+  .skel-row { display: flex; gap: 12px; margin-bottom: 18px; }
+  .skel-lines { flex: 1; }
+
+  /* ───────── Accessibility ───────── */
+  button:focus-visible, a:focus-visible {
+    outline: 2px solid var(--rose);
+    outline-offset: 3px;
+  }
+
+  @media (min-width: 640px) {
+    body { padding-top: 50px; }
+    .app-shell { max-width: 500px; }
+    .card { padding: 28px 24px 22px; }
+    .latest-section, .footer-link { padding-left: 24px; padding-right: 24px; }
+  }
+
+  @media (max-width: 380px) {
+    .card { padding: 22px 14px 18px; }
+    .feature-list { grid-template-columns: 1fr; }
+    .course-thumb { width: 68px; height: 68px; flex-basis: 68px; }
+    .course-title { font-size: 14px; }
+    .step { padding: 12px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Confetti canvas */
+  #confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    display: none;
+  }
+
+/* JOBS adaptation: retain Udemy detail/unlock visual language */
+.job-card{background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018))}
+.logo{background:linear-gradient(145deg,var(--wine-bright),#390d1c);border-color:rgba(217,106,136,.24);box-shadow:var(--shadow-wine)}
+.company{color:#ef9ab0}
+.pill{background:rgba(255,255,255,.055);color:#bdb7ba;border:1px solid var(--border)}
+.btn-ad,.btn-apply{background:linear-gradient(135deg,#a51f46 0%,#741631 100%);box-shadow:0 13px 32px rgba(123,23,51,.38)}
+.btn-all{background:rgba(255,255,255,.035);color:var(--rose);border-color:rgba(165,31,70,.40)}
 </style>
 
+<style>
+.steps{display:flex;flex-direction:column;gap:10px;margin:10px 0 14px}
+.step{position:relative;min-height:118px;display:grid;grid-template-columns:44px 1fr;grid-template-rows:auto auto;column-gap:12px;padding:14px;border:1px solid var(--border);border-radius:17px;background:linear-gradient(145deg,rgba(255,255,255,.045),rgba(255,255,255,.018));transition:.25s ease}
+.step.locked{opacity:.42}
+.step.done{border-color:rgba(86,197,150,.30);background:linear-gradient(145deg,rgba(86,197,150,.08),rgba(255,255,255,.02))}
+.step-num{grid-row:1/3;width:38px;height:38px;border-radius:12px;background:var(--wine-soft);border:1px solid rgba(165,31,70,.35);color:#ef9ab0;display:flex;align-items:center;justify-content:center;font-weight:900}
+.step-title{color:#f6f2f3;font-size:12px;font-weight:850;align-self:end}
+.step-sub{color:var(--text-muted);font-size:10px;margin-top:4px}
+.step-btn{grid-column:2;min-height:42px;margin-top:10px;border:1px solid rgba(165,31,70,.38);border-radius:11px;background:linear-gradient(135deg,var(--wine-bright),var(--wine));color:#fff;font-size:11px;font-weight:850;cursor:pointer;box-shadow:0 8px 20px rgba(123,23,51,.22)}
+.step-btn:disabled{background:rgba(255,255,255,.06);border-color:var(--border);color:#817b7e;cursor:not-allowed;box-shadow:none}
+#jobs-steps{grid-column:1/-1}
+#locked-view .ring-wrap{margin:0}
+@media(max-width:380px){.step{padding:12px}}
+</style>
 </head>
 <body>
 <div class="app-shell">
@@ -105,7 +899,6 @@ h1{font-size:16px;margin:2px 0 5px;line-height:1.35;color:#f6f2f3}
     Curated daily from LinkedIn · <a href="https://t.me/Jobs204" target="_blank">@Jobs204</a>
   </div>
 
-</div>
 <script>
   const tg = window.Telegram?.WebApp;
   tg?.ready();
@@ -125,9 +918,10 @@ h1{font-size:16px;margin:2px 0 5px;line-height:1.35;color:#f6f2f3}
   }
 
   // ---- Replace with your real AdsGram block id ----
-  const ADSGRAM_BLOCK_ID = "46764";
+  const ADSGRAM_INTERSTITIAL_ID_1 = 'int-46764';
+  const ADSGRAM_INTERSTITIAL_ID_2 = 'int-46766';
+  const MAX_AD_WAIT_MS = 12000;
   const WAIT_SECONDS = 99;
-  const ADSGRAM_INTERSTITIAL_2 = "46766";
 
   function decodeStartParam(param) {
     try {
@@ -202,67 +996,121 @@ h1{font-size:16px;margin:2px 0 5px;line-height:1.35;color:#f6f2f3}
     document.getElementById("company").textContent = "Please open this from the channel post.";
   }
 
-  // ---------------- Countdown ring ----------------
-  const RADIUS = 50;
-  const CIRC = 2 * Math.PI * RADIUS;
-  const fgCircle = document.getElementById("fg-circle");
-  fgCircle.style.strokeDasharray = `${CIRC}`;
-  fgCircle.style.strokeDashoffset = `0`;
 
-  let remaining = WAIT_SECONDS;
-  const countEl = document.getElementById("count");
-  const statusEl = document.getElementById("unlock-status");
-  const hintEl = document.getElementById("unlock-hint");
-  let timerId = null;
+  // ---------------- Two-step AdsGram unlock (same UX as Udemy) ----------------
+  let step1Done = false;
+  let step2Done = false;
+  let adPlaying = false;
+  let adsCtrl1 = null;
+  let adsCtrl2 = null;
 
-  function renderTick() {
-    countEl.textContent = remaining;
-    const progress = 1 - remaining / WAIT_SECONDS;
-    fgCircle.style.strokeDashoffset = `${CIRC * (1 - progress)}`;
+  function getAdController(step) {
+    const id = step === 1 ? ADSGRAM_INTERSTITIAL_ID_1 : ADSGRAM_INTERSTITIAL_ID_2;
+    if (step === 1 && adsCtrl1) return adsCtrl1;
+    if (step === 2 && adsCtrl2) return adsCtrl2;
+    if (!window.Adsgram || typeof window.Adsgram.init !== 'function') return null;
+    const ctrl = window.Adsgram.init({ blockId: id });
+    if (step === 1) adsCtrl1 = ctrl; else adsCtrl2 = ctrl;
+    return ctrl;
   }
 
-  function unlock() {
-    clearInterval(timerId);
-    document.getElementById("locked-view").classList.add("hidden");
-    document.getElementById("apply-link").classList.remove("hidden");
+  function showAd(step) {
+    return new Promise(resolve => {
+      const ctrl = getAdController(step);
+      if (!ctrl) return resolve(false);
+      let done = false;
+      const finish = ok => { if (done) return; done = true; resolve(ok); };
+      const timeout = setTimeout(() => finish(false), MAX_AD_WAIT_MS);
+      ctrl.show().then(() => { clearTimeout(timeout); finish(true); })
+        .catch(() => { clearTimeout(timeout); finish(false); });
+    });
   }
 
-  function startTimer() {
-    if (!data) return;
-    renderTick();
-    timerId = setInterval(() => {
-      remaining -= 1;
-      if (remaining <= 0) {
-        renderTick();
-        unlock();
-        return;
-      }
-      renderTick();
-    }, 1000);
-  }
+  function rebuildUnlockUI() {
+    const locked = document.getElementById('locked-view');
+    const status = document.getElementById('unlock-status');
+    const hint = document.getElementById('unlock-hint');
+    const ring = document.querySelector('.ring-wrap');
+    const skip = document.getElementById('skip-ad-btn');
+    const wait = document.getElementById('locked-btn');
 
-  if (data) startTimer();
+    if (!locked) return;
 
-  // ---------------- AdsGram "skip the wait" ----------------
-  document.getElementById("skip-ad-btn").addEventListener("click", () => {
-    if (!data) return;
-    if (!window.Adsgram) {
-      statusEl.textContent = "Ad service unavailable — please wait for the timer.";
-      return;
-    }
-    const AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
-    AdController.show()
-      .then(() => {
-        // Ad watched successfully -> unlock immediately
-        statusEl.textContent = "Unlocked!";
-        hintEl.textContent = "Thanks for supporting the channel.";
-        unlock();
-      })
-      .catch(() => {
-        // User closed/skipped the ad early -> keep waiting on the normal timer
-        hintEl.textContent = "Ad skipped — please wait for the timer, or try again.";
+    // Convert the original timer area into the same two-step interaction
+    // used by Udemy, without changing the surrounding page/data structure.
+    if (!document.getElementById('jobs-step-1')) {
+      ring.style.display = 'none';
+      skip.textContent = '▶️ Open Ad 1';
+      wait.textContent = '🔒 Open both ads to unlock';
+      wait.disabled = true;
+      wait.className = 'btn btn-locked';
+      status.textContent = 'Unlock this job';
+      hint.textContent = 'Complete the two ad steps below to view the job.';
+      const steps = document.createElement('div');
+      steps.id = 'jobs-steps';
+      steps.className = 'steps';
+      steps.innerHTML = `
+        <div class="step" id="jobs-step-1">
+          <div class="step-num">1</div>
+          <div class="step-title">Open Ad 1</div>
+          <div class="step-sub" id="jobs-sub-1">Tap below to open the first ad</div>
+          <button class="step-btn" id="jobs-btn-1">▶️ Open Ad 1</button>
+        </div>
+        <div class="step locked" id="jobs-step-2">
+          <div class="step-num">2</div>
+          <div class="step-title">Open Ad 2</div>
+          <div class="step-sub" id="jobs-sub-2">Complete Step 1 first</div>
+          <button class="step-btn" id="jobs-btn-2" disabled>▶️ Open Ad 2</button>
+        </div>`;
+      skip.replaceWith(steps);
+      const btn1 = document.getElementById('jobs-btn-1');
+      const btn2 = document.getElementById('jobs-btn-2');
+
+      btn1.addEventListener('click', async () => {
+        if (adPlaying || step1Done) return;
+        adPlaying = true; btn1.disabled = true; btn1.textContent = '⏳ Loading Ad 1…';
+        const ok = await showAd(1);
+        adPlaying = false;
+        if (ok) {
+          step1Done = true;
+          document.getElementById('jobs-step-1').classList.add('done');
+          btn1.textContent = '✓ Ad 1 Completed';
+          document.getElementById('jobs-step-2').classList.remove('locked');
+          btn2.disabled = false;
+          document.getElementById('jobs-sub-2').textContent = 'Tap below to open the second ad';
+          status.textContent = 'Step 1 completed';
+        } else {
+          btn1.disabled = false; btn1.textContent = '▶️ Open Ad 1';
+          hint.textContent = 'Ad 1 was unavailable or closed. Please try again.';
+        }
       });
-  });
+
+      btn2.addEventListener('click', async () => {
+        if (adPlaying || !step1Done || step2Done) return;
+        adPlaying = true; btn2.disabled = true; btn2.textContent = '⏳ Loading Ad 2…';
+        const ok = await showAd(2);
+        adPlaying = false;
+        if (ok) {
+          step2Done = true;
+          document.getElementById('jobs-step-2').classList.add('done');
+          btn2.textContent = '✓ Ad 2 Completed';
+          status.textContent = 'Unlocked!';
+          hint.textContent = 'Thanks for supporting the jobs channel.';
+          const apply = document.getElementById('apply-link');
+          apply.classList.remove('hidden');
+          apply.classList.add('btn-apply');
+          locked.classList.add('hidden');
+        } else {
+          btn2.disabled = false; btn2.textContent = '▶️ Open Ad 2';
+          hint.textContent = 'Ad 2 was unavailable or closed. Please try again.';
+        }
+      });
+    }
+  }
+
+  if (data) rebuildUnlockUI();
+
 </script>
+</div>
 </body>
 </html>
