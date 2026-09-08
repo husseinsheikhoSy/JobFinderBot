@@ -320,14 +320,24 @@
       }
     });
 
-    // Native Task ad — a single sponsored card mixed naturally into the
-    // list (after the 4th job). Pure browsing content, never gates a
-    // core action, per Adsgram's placement rules.
-    const taskCardHtml = `<adsgram-task data-block-id="${ADSGRAM_TASK_BLOCK_ID}" data-debug="false" class="task"></adsgram-task>`;
-    if (cardsHtml.length > 4) cardsHtml.splice(4, 0, taskCardHtml);
-    else if (cardsHtml.length) cardsHtml.push(taskCardHtml);
+    // Native Task ad — a sponsored card repeated every 4 job cards
+    // (after cards 4, 8, 12, …). Pure browsing content mixed into the
+    // feed, never gates a core action, per Adsgram's placement rules.
+    // Each repeat needs a distinct instance-id (not just class) so the
+    // Adsgram SDK initializes every occurrence independently instead of
+    // treating repeats of the same block as one element.
+    const taskCard = (idx) =>
+      `<adsgram-task data-block-id="${ADSGRAM_TASK_BLOCK_ID}" data-debug="false" class="task" id="ad-task-${idx}"></adsgram-task>`;
 
-    listEl.innerHTML = cardsHtml.join("");
+    const withTasks = [];
+    cardsHtml.forEach((cardHtml, i) => {
+      withTasks.push(cardHtml);
+      if ((i + 1) % 4 === 0) withTasks.push(taskCard((i + 1) / 4));
+    });
+    // If the list is shorter than 4 but non-empty, still show one task ad.
+    if (cardsHtml.length && cardsHtml.length < 4) withTasks.push(taskCard(1));
+
+    listEl.innerHTML = withTasks.join("");
   }
 
   // PostgREST caps any single request at PAGE_SIZE rows even if you ask
