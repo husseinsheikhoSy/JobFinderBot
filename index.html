@@ -376,8 +376,43 @@
     renderList();
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  One-time welcome Interstitial ad — Jobs Interstitial 1
+  //  (int-46764). Shown at most ONCE per session: a sessionStorage
+  //  flag is set the instant we attempt to show it, so even rapid
+  //  re-entry into the page (or a slow/failed ad) can't trigger it
+  //  twice. Purely a monetization touch — never blocks browsing or
+  //  any core action, and failures are silently ignored.
+  // ══════════════════════════════════════════════════════════════
+  const ADSGRAM_INTERSTITIAL_ID = 'int-46764';
+  const INTERSTITIAL_SESSION_KEY = 'jobs_interstitial_shown';
+  let interstitialCtrl = null;
+
+  function getInterstitial() {
+    if (interstitialCtrl) return interstitialCtrl;
+    if (window.Adsgram && typeof window.Adsgram.init === 'function') {
+      interstitialCtrl = window.Adsgram.init({ blockId: ADSGRAM_INTERSTITIAL_ID });
+    }
+    return interstitialCtrl;
+  }
+
+  function showWelcomeInterstitialOnce() {
+    try {
+      if (sessionStorage.getItem(INTERSTITIAL_SESSION_KEY) === '1') return;
+      sessionStorage.setItem(INTERSTITIAL_SESSION_KEY, '1'); // mark first, so it can never fire twice
+    } catch (e) { /* sessionStorage unavailable — skip rather than risk repeats */ return; }
+
+    const ctrl = getInterstitial();
+    if (!ctrl) return;
+    ctrl.show().catch(() => { /* closed early or no fill — nothing to do */ });
+  }
+
   if (!(routerStartParam && routerStartParam !== "all")) {
-    loadJobs();
+    loadJobs().then(() => {
+      // Small delay so the list is visibly rendered first —
+      // avoids the ad covering a blank/loading screen.
+      setTimeout(showWelcomeInterstitialOnce, 800);
+    });
   }
 </script>
 
