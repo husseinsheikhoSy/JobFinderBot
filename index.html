@@ -166,6 +166,11 @@
   .whatsapp-btn:active { transform:scale(.98); }
 
   button:focus-visible, a:focus-visible { outline:2px solid var(--pink-bright); outline-offset:3px; }
+
+  .heart { background:none; border:1px solid var(--border); color:var(--text-muted); width:30px; height:30px; border-radius:50%; font-size:15px; cursor:pointer; line-height:1; }
+  .heart.on { color:var(--pink-bright); border-color:rgba(255,45,120,.5); background:var(--pink-soft); }
+  #toast { position:fixed; left:50%; bottom:calc(24px + var(--tg-content-safe-area-inset-bottom,0px)); transform:translate(-50%,20px); background:#26262c; color:#fff; padding:10px 16px; border-radius:12px; font-size:12px; font-weight:700; opacity:0; pointer-events:none; transition:.2s; z-index:99; }
+  #toast.show { opacity:1; transform:translate(-50%,0); }
 </style>
 </head>
 <body>
@@ -175,7 +180,9 @@
       <div class="subtitle" id="count-label">Loading opportunities…</div>
     </div>
 
+    <div style="padding:12px 14px 0"><input id="search" type="search" placeholder="🔍 Search role, skill or company" autocomplete="off" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--text);font:600 13px Inter,sans-serif;outline:none"></div>
     <div class="filters" id="filters"></div>
+    <div class="filters" id="filters2" style="padding-top:0"></div>
 
     <div class="list" id="list">
       <div class="state-msg">Loading jobs…</div>
@@ -221,20 +228,76 @@
   const SUPABASE_ANON_KEY = "sb_publishable_rIPkmh5DNK3ZKvW5ygFBXA_2_y0zDeX";
 
   const CATEGORY_LABELS = {
-    python: "🐍 Python",
-    ai_ml: "🤖 AI & ML",
-    data_science: "📊 Data Science",
-    web_dev: "🌐 Web Dev",
-    software_eng: "💻 Software Eng",
+    python: "🐍 Python", ai_ml: "🤖 AI & ML", data_science: "📊 Data Science", web_dev: "🌐 Web Dev",
+    software_eng: "💻 Software Eng", devops_cloud: "☁️ DevOps & Cloud", cybersecurity: "🔐 Cybersecurity",
+    mobile_dev: "📱 Mobile", ui_ux: "🎨 UI/UX", qa_testing: "🧪 QA & Testing",
   };
-  const CATEGORY_ORDER = ["python", "ai_ml", "data_science", "web_dev", "software_eng"];
+  const CATEGORY_ORDER = Object.keys(CATEGORY_LABELS);
 
   // Adsgram — native Task ad card, mixed into the browsing list only
   // (never blocks any core action, per Adsgram policy).
   const ADSGRAM_TASK_BLOCK_ID = "task-46767";
 
+  const INIT_DATA = tg?.initData || "";
+  async function rpc(name, args) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, { method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_init_data: INIT_DATA, ...args }) });
+    if (!r.ok) throw new Error("rpc " + r.status);
+    return r.json();
+  }
+  const haptic = () => { try { tg?.HapticFeedback?.impactOccurred("light"); } catch (e) {} };
+  const STATUS = { applied: "📨 Applied", interview: "🎤 Interview", offer: "🎉 Offer", rejected: "❌ Rejected" };
+  let savedSet = new Set(), apps = {};
+  async function loadState() {
+    if (!INIT_DATA) return;
+    try { const r = await rpc("miniapp_state", {});
+      if (r && r.ok) { savedSet = new Set(r.saved || []); apps = r.apps || {}; if (typeof renderList === "function" && allJobs.length) renderList(); }
+    } catch (e) { console.warn("state failed", e); }
+  }
+  function toast(msg) {
+    let t = document.getElementById("toast");
+    if (!t) { t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); }
+    t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1800);
+  }
+  async function toggleSave(jobId) {
+    if (!INIT_DATA) { toast("Open this app inside Telegram to save jobs"); return false; }
+    const want = !savedSet.has(jobId);
+    want ? savedSet.add(jobId) : savedSet.delete(jobId); haptic();
+    try { const r = await rpc("miniapp_toggle_save", { p_job_id: jobId, p_save: want });
+      if (!r || !r.ok) throw 0; toast(want ? "❤️ Saved" : "Removed from saved"); return true;
+    } catch (e) { want ? savedSet.delete(jobId) : savedSet.add(jobId); toast("Could not update. Try again."); return false; }
+  }
+  async function setApplication(jobId, status) {
+    if (!INIT_DATA) { toast("Open this app inside Telegram"); return false; }
+    const prev = apps[jobId];
+    status ? (apps[jobId] = status) : delete apps[jobId]; haptic();
+    try { const r = await rpc("miniapp_set_application", { p_job_id: jobId, p_status: status || null });
+      if (!r || !r.ok) throw 0; return true;
+    } catch (e) { prev ? (apps[jobId] = prev) : delete apps[jobId]; toast("Could not update. Try again."); return false; }
+  }
   let allJobs = [];
-  let activeFilter = "all";
+  let activeFilter = "all", extraFilter = "", query = "";
+  const EXTRA = [["", "Any type"], ["saved", "❤️ Saved"], ["tracked", "📝 Tracked"], ["entry", "🌱 Entry"],
+                 ["intern", "🎓 Internship"], ["senior", "🧠 Senior"], ["contract", "📝 Contract"], ["parttime", "⏱ Part-time"]];
+  function matchExtra(j) {
+    const sen = (j.seniority || "").toLowerCase(), typ = (j.employment_type || "").toLowerCase();
+    switch (extraFilter) {
+      case "saved": return savedSet.has(j.job_id);
+      case "tracked": return !!apps[j.job_id];
+      case "entry": return sen.includes("entry") || sen.includes("associate");
+      case "intern": return sen.includes("intern") || typ.includes("intern");
+      case "senior": return sen.includes("senior") || sen.includes("director");
+      case "contract": return typ.includes("contract");
+      case "parttime": return typ.includes("part");
+      default: return true;
+    }
+  }
+  function visibleJobs() {
+    const q = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    return allJobs.filter(j => (activeFilter === "all" || normCategory(j.category) === activeFilter) && matchExtra(j) &&
+      q.every(t => (j.title + " " + j.company).toLowerCase().includes(t)));
+  }
 
   function normCategory(c) { return (c || "").toString().trim().toLowerCase(); }
 
@@ -264,23 +327,18 @@
   }
 
   function renderFilters() {
-    const el = document.getElementById("filters");
-    const chips = [{ key: "all", label: "All" }, ...CATEGORY_ORDER.map(c => ({ key: c, label: CATEGORY_LABELS[c] }))];
-    el.innerHTML = chips.map(c =>
-      `<div class="chip ${c.key === activeFilter ? "active" : ""}" data-key="${c.key}">${c.label}</div>`
-    ).join("");
-    el.querySelectorAll(".chip").forEach(chip => {
-      chip.addEventListener("click", () => {
-        activeFilter = chip.dataset.key;
-        renderFilters();
-        renderList();
-      });
-    });
+    const make = (id, items, cur, set) => {
+      const el = document.getElementById(id);
+      el.innerHTML = items.map(([k, l]) => `<div class="chip ${k === cur ? "active" : ""}" data-key="${k}">${l}</div>`).join("");
+      el.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => { set(c.dataset.key); renderFilters(); renderList(); }));
+    };
+    make("filters", [["all", "All"], ...CATEGORY_ORDER.map(c => [c, CATEGORY_LABELS[c]])], activeFilter, v => activeFilter = v);
+    make("filters2", EXTRA, extraFilter, v => extraFilter = v);
   }
 
   function renderList() {
     const listEl = document.getElementById("list");
-    const jobs = activeFilter === "all" ? allJobs : allJobs.filter(j => normCategory(j.category) === activeFilter);
+    const jobs = visibleJobs();
 
     document.getElementById("count-label").textContent =
       allJobs.length ? `${jobs.length} of ${allJobs.length} opportunities` : "No jobs available yet";
@@ -296,6 +354,8 @@
           ? `<img class="job-logo" src="${esc(job.company_logo)}" alt="" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'job-logo',textContent:'💼'}))" />`
           : `<div class="job-logo">💼</div>`;
         const catLabel = CATEGORY_LABELS[job.category] || "💼 Job";
+        const on = savedSet.has(job.job_id), st = apps[job.job_id];
+        const isNew = job.fetched_at && Date.now() - new Date(job.fetched_at).getTime() < 6 * 3600000;
         const payload = utf8ToBase64Url(JSON.stringify({
           id: job.job_id, t: job.title, c: job.company, l: job.location,
           u: job.job_url, cat: job.category, img: job.company_logo || ""
@@ -309,10 +369,10 @@
               <div class="job-meta">
                 <span>📍 ${esc(job.location || "Remote")}</span>
                 <span class="dot">🌐 Remote</span>
-                <span class="dot">${esc(timeAgo(job.fetched_at))}</span>
+                <span class="dot">${esc(timeAgo(job.fetched_at))}</span>${isNew ? '<span class="dot">🆕 New</span>' : ""}${job.employment_type ? `<span class="dot">${esc(job.employment_type)}</span>` : ""}${st ? `<span class="dot">${STATUS[st] || ""}</span>` : ""}
               </div>
             </div>
-            <div class="job-cat-pill">${catLabel}</div>
+            <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end"><div class="job-cat-pill">${catLabel}</div><button class="heart ${on ? "on" : ""}" data-id="${esc(job.job_id)}" aria-label="Save">♥</button></div>
           </a>`;
       } catch (e) {
         console.warn("Skipping job card that failed to render:", job, e);
@@ -348,7 +408,7 @@
 
   async function fetchJobsPage(from, to) {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/linkedin_jobs?select=job_id,title,company,company_logo,location,job_url,category,fetched_at&order=fetched_at.desc`,
+      `${SUPABASE_URL}/rest/v1/linkedin_jobs?select=job_id,title,company,company_logo,location,job_url,category,fetched_at,employment_type,seniority&status=eq.open&order=fetched_at.desc`,
       {
         headers: {
           apikey: SUPABASE_ANON_KEY,
@@ -384,6 +444,7 @@
     }
     renderFilters();
     renderList();
+    loadState();
   }
 
   // ══════════════════════════════════════════════════════════════
@@ -416,6 +477,14 @@
     if (!ctrl) return;
     ctrl.show().catch(() => { /* closed early or no fill — nothing to do */ });
   }
+
+document.getElementById("list").addEventListener("click", async (e) => {
+    const h = e.target.closest(".heart"); if (!h) return;
+    e.preventDefault(); e.stopPropagation();
+    await toggleSave(h.dataset.id); h.classList.toggle("on", savedSet.has(h.dataset.id));
+    if (extraFilter === "saved") renderList();
+  });
+  document.getElementById("search").addEventListener("input", (e) => { query = e.target.value; renderList(); });
 
   if (!(routerStartParam && routerStartParam !== "all")) {
     loadJobs().then(() => {
