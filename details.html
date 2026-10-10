@@ -286,6 +286,12 @@ adsgram-task.task {
 
 button:focus-visible, a:focus-visible { outline: 2px solid var(--pink-bright); outline-offset: 3px; }
 .hidden { display: none !important; }
+
+  .heart { background:none; border:1px solid var(--border); color:var(--text-muted); width:30px; height:30px; border-radius:50%; font-size:15px; cursor:pointer; line-height:1; }
+  .heart.on { color:var(--pink-bright); border-color:rgba(255,45,120,.5); background:var(--pink-soft); }
+  #toast { position:fixed; left:50%; bottom:calc(24px + var(--tg-content-safe-area-inset-bottom,0px)); transform:translate(-50%,20px); background:#26262c; color:#fff; padding:10px 16px; border-radius:12px; font-size:12px; font-weight:700; opacity:0; pointer-events:none; transition:.2s; z-index:99; }
+  #toast.show { opacity:1; transform:translate(-50%,0); }
+.trk{padding:8px 11px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.045);color:var(--text-muted);font:800 11px Inter,sans-serif;cursor:pointer}.trk.on{background:var(--pink-soft);border-color:rgba(255,45,120,.5);color:#ff9dc0}
 </style>
 </head>
 <body>
@@ -314,6 +320,18 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--pink-bright); o
           <span>🌐 Remote</span>
         </div>
       </div>
+    </div>
+
+    <div class="job-tags" id="extra-tags" style="margin:0 0 12px"></div>
+    <div id="actions" style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="step-btn" id="save-btn" style="flex:1">♡ Save</button>
+      <button class="step-btn" id="share-btn" style="flex:1">🔗 Share</button>
+    </div>
+    <div id="tracker" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px"></div>
+    <div id="closed-note" class="hidden" style="background:rgba(255,80,80,.12);border:1px solid rgba(255,80,80,.4);color:#ff9d9d;border-radius:12px;padding:10px 12px;font-size:12px;font-weight:700;margin-bottom:12px">🔴 This posting is closed — it is no longer accepting applications.</div>
+    <div id="desc-wrap" class="hidden" style="margin-bottom:14px">
+      <div id="desc" style="font-size:12.5px;line-height:1.55;color:var(--text-muted);white-space:pre-line;max-height:120px;overflow:hidden"></div>
+      <button id="desc-more" class="step-btn" style="margin-top:8px;width:100%">Show full description</button>
     </div>
 
     <div class="feature-list">
@@ -414,11 +432,9 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--pink-bright); o
     || tg?.initDataUnsafe?.start_param;
 
   const CATEGORY_LABELS = {
-    python: "🐍 Python",
-    ai_ml: "🤖 AI & ML",
-    data_science: "📊 Data Science",
-    web_dev: "🌐 Web Dev",
-    software_eng: "💻 Software Eng",
+    python: "🐍 Python", ai_ml: "🤖 AI & ML", data_science: "📊 Data Science", web_dev: "🌐 Web Dev",
+    software_eng: "💻 Software Eng", devops_cloud: "☁️ DevOps & Cloud", cybersecurity: "🔐 Cybersecurity",
+    mobile_dev: "📱 Mobile", ui_ux: "🎨 UI/UX", qa_testing: "🧪 QA & Testing",
   };
 
   // "all" (or no payload) -> this is really a browse-all request, send to index.html
@@ -428,6 +444,88 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--pink-bright); o
 
   const data = startParam && startParam !== "all" ? decodeStartParam(startParam) : null;
 
+  const SUPABASE_URL = "https://yfgklalkjldbcykczezt.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_rIPkmh5DNK3ZKvW5ygFBXA_2_y0zDeX";
+  const INIT_DATA = tg?.initData || "";
+  async function rpc(name, args) {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, { method: "POST",
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_init_data: INIT_DATA, ...args }) });
+    if (!r.ok) throw new Error("rpc " + r.status);
+    return r.json();
+  }
+  const haptic = () => { try { tg?.HapticFeedback?.impactOccurred("light"); } catch (e) {} };
+  const STATUS = { applied: "📨 Applied", interview: "🎤 Interview", offer: "🎉 Offer", rejected: "❌ Rejected" };
+  let savedSet = new Set(), apps = {};
+  async function loadState() {
+    if (!INIT_DATA) return;
+    try { const r = await rpc("miniapp_state", {});
+      if (r && r.ok) { savedSet = new Set(r.saved || []); apps = r.apps || {}; paintActions(); }
+    } catch (e) { console.warn("state failed", e); }
+  }
+  function toast(msg) {
+    let t = document.getElementById("toast");
+    if (!t) { t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); }
+    t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1800);
+  }
+  async function toggleSave(jobId) {
+    if (!INIT_DATA) { toast("Open this app inside Telegram to save jobs"); return false; }
+    const want = !savedSet.has(jobId);
+    want ? savedSet.add(jobId) : savedSet.delete(jobId); haptic();
+    try { const r = await rpc("miniapp_toggle_save", { p_job_id: jobId, p_save: want });
+      if (!r || !r.ok) throw 0; toast(want ? "❤️ Saved" : "Removed from saved"); return true;
+    } catch (e) { want ? savedSet.delete(jobId) : savedSet.add(jobId); toast("Could not update. Try again."); return false; }
+  }
+  async function setApplication(jobId, status) {
+    if (!INIT_DATA) { toast("Open this app inside Telegram"); return false; }
+    const prev = apps[jobId];
+    status ? (apps[jobId] = status) : delete apps[jobId]; haptic();
+    try { const r = await rpc("miniapp_set_application", { p_job_id: jobId, p_status: status || null });
+      if (!r || !r.ok) throw 0; return true;
+    } catch (e) { prev ? (apps[jobId] = prev) : delete apps[jobId]; toast("Could not update. Try again."); return false; }
+  }
+  let allJobs = [];
+  const jobId = data && data.id;
+  function paintActions() {
+    if (!jobId) return;
+    document.getElementById("save-btn").textContent = savedSet.has(jobId) ? "❤️ Saved" : "♡ Save";
+    document.getElementById("tracker").innerHTML = Object.entries(STATUS).map(([k, l]) =>
+      `<button class="trk ${apps[jobId] === k ? "on" : ""}" data-k="${k}">${l}</button>`).join("");
+  }
+  async function enrichDetails() {
+    if (!jobId) return;
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/linkedin_jobs?select=description,seniority,employment_type,salary,applicants,status&job_id=eq.${encodeURIComponent(jobId)}&limit=1`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } });
+      const row = (await r.json())[0]; if (!row) return;
+      const tags = [row.employment_type && "💼 " + row.employment_type, row.seniority && "🎯 " + row.seniority,
+                    row.salary && "💰 " + row.salary, row.applicants && "👥 " + row.applicants].filter(Boolean);
+      document.getElementById("extra-tags").innerHTML = tags.map(t => `<span class="tag">${t.replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}</span>`).join("");
+      if (row.status && row.status !== "open") document.getElementById("closed-note").classList.remove("hidden");
+      if (row.description) {
+        document.getElementById("desc").textContent = row.description.slice(0, 3000);
+        document.getElementById("desc-wrap").classList.remove("hidden");
+      }
+    } catch (e) {}
+  }
+  if (jobId) {
+    document.getElementById("save-btn").addEventListener("click", async () => { await toggleSave(jobId); paintActions(); });
+    document.getElementById("tracker").addEventListener("click", async (e) => {
+      const b = e.target.closest(".trk"); if (!b) return;
+      await setApplication(jobId, apps[jobId] === b.dataset.k ? null : b.dataset.k); paintActions();
+    });
+    document.getElementById("share-btn").addEventListener("click", () => {
+      const url = `https://t.me/share/url?url=${encodeURIComponent("https://t.me/JobsFiBot?start=job_" + jobId)}&text=${encodeURIComponent((data.t || "Job") + " @ " + (data.c || ""))}`;
+      tg?.openTelegramLink ? tg.openTelegramLink(url) : window.open(url, "_blank");
+    });
+    document.getElementById("desc-more").addEventListener("click", (e) => {
+      const el = document.getElementById("desc"); el.style.maxHeight = el.style.maxHeight ? "" : "120px";
+      e.target.textContent = el.style.maxHeight ? "Show full description" : "Show less";
+    });
+    document.getElementById("desc").style.maxHeight = "120px";
+    paintActions(); enrichDetails(); loadState();
+    if (INIT_DATA) rpc("miniapp_track_view", { p_job_id: jobId }).catch(() => {});
+  }
   let applyUrl = "https://t.me/Jobs204";
 
   if (data) {
