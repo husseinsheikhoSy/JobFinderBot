@@ -597,9 +597,12 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--pink-bright); o
     btn.textContent = '⏳ Opening ad…';
     sub.textContent = 'Please wait for the ad to load';
 
-    showAdsgramInterstitial(stepNum).then(() => {
+    showAdsgramInterstitial(stepNum).then((res) => {
       btn.classList.remove('watching');
       completeStep(stepNum);
+      if (res === 'ok' && INIT_DATA) rpc('miniapp_claim_ad', { p_placement: 'details' })
+        .then(r => { if (r && r.ok) toast('+' + r.reward + ' points 🎉'); else if (r && r.reason === 'limit') toast('Daily points limit reached'); })
+        .catch(() => {});
     });
   }
 
