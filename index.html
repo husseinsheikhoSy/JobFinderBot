@@ -171,6 +171,27 @@
   .heart.on { color:var(--pink-bright); border-color:rgba(255,45,120,.5); background:var(--pink-soft); }
   #toast { position:fixed; left:50%; bottom:calc(24px + var(--tg-content-safe-area-inset-bottom,0px)); transform:translate(-50%,20px); background:#26262c; color:#fff; padding:10px 16px; border-radius:12px; font-size:12px; font-weight:700; opacity:0; pointer-events:none; transition:.2s; z-index:99; }
   #toast.show { opacity:1; transform:translate(-50%,0); }
+
+  .view { padding:16px 14px 20px; display:flex; flex-direction:column; gap:12px; }
+  .panel { background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.018)); border:1px solid var(--border); border-radius:17px; padding:15px; }
+  .panel h3 { font-size:13px; font-weight:900; margin-bottom:8px; }
+  .big { font-size:34px; font-weight:900; color:var(--pink-bright); letter-spacing:-1px; }
+  .muted { color:var(--text-muted); font-size:11.5px; font-weight:600; }
+  .bar { height:8px; border-radius:99px; background:rgba(255,255,255,.08); margin:10px 0 6px; overflow:hidden; }
+  .bar > i { display:block; height:100%; background:linear-gradient(90deg,var(--pink),var(--pink-bright)); border-radius:99px; }
+  .btn { width:100%; padding:13px; border:0; border-radius:13px; font:900 13px Inter,sans-serif; color:#fff; cursor:pointer;
+         background:linear-gradient(135deg,var(--pink-bright),var(--pink)); box-shadow:var(--shadow-pink); }
+  .btn.ghost { background:rgba(255,255,255,.06); box-shadow:none; border:1px solid var(--border); color:#e8e2e5; }
+  .btn:disabled { opacity:.45; box-shadow:none; }
+  .row { display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--border); font-size:12.5px; font-weight:700; }
+  .row:first-of-type { border-top:0; } .row b { margin-left:auto; color:var(--pink-bright); }
+  .avatar { width:54px; height:54px; border-radius:50%; background:var(--pink-soft); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:900; overflow:hidden; border:1px solid rgba(255,90,150,.4); }
+  .avatar img { width:100%; height:100%; object-fit:cover; }
+  .kwin { flex:1; padding:10px 12px; border-radius:11px; border:1px solid var(--border); background:rgba(255,255,255,.05); color:var(--text); font:600 12.5px Inter,sans-serif; outline:none; }
+  #tabs { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:min(100%,500px); z-index:30; display:flex; background:rgba(13,13,16,.96); backdrop-filter:blur(12px); border-top:1px solid var(--border); padding:6px 6px calc(8px + var(--tg-content-safe-area-inset-bottom,0px)); }
+  #tabs button { flex:1; background:none; border:0; color:var(--text-muted); font:800 10.5px Inter,sans-serif; padding:6px 0; display:flex; flex-direction:column; gap:3px; align-items:center; cursor:pointer; }
+  #tabs button span { font-size:19px; } #tabs button.on { color:var(--pink-bright); }
+  .app-shell { padding-bottom:78px; }
 </style>
 </head>
 <body>
@@ -180,7 +201,7 @@
       <div class="subtitle" id="count-label">Loading opportunities…</div>
     </div>
 
-    <div style="padding:12px 14px 0"><input id="search" type="search" placeholder="🔍 Search role, skill or company" autocomplete="off" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--text);font:600 13px Inter,sans-serif;outline:none"></div>
+    <div id="searchwrap" style="padding:12px 14px 0"><input id="search" type="search" placeholder="🔍 Search role, skill or company" autocomplete="off" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,.05);color:var(--text);font:600 13px Inter,sans-serif;outline:none"></div>
     <div class="filters" id="filters"></div>
     <div class="filters" id="filters2" style="padding-top:0"></div>
 
@@ -188,11 +209,15 @@
       <div class="state-msg">Loading jobs…</div>
     </div>
 
+    <div id="view-earn" class="view hidden"></div>
+    <div id="view-me" class="view hidden"></div>
+
     <div class="footer-link">
       <a class="whatsapp-btn" href="https://t.me/Jobs204" target="_blank" rel="noopener">
         📣 Join @Jobs204 on Telegram
       </a>
     </div>
+  <nav id="tabs"></nav>
   </div>
 
 <script>
@@ -218,7 +243,7 @@
     || new URLSearchParams(window.location.search).get("startapp")
     || new URLSearchParams(window.location.search).get("tgWebAppStartParam");
 
-  if (routerStartParam && routerStartParam !== "all") {
+  if (routerStartParam && routerStartParam !== "all" && routerStartParam !== "wallet") {
     window.location.replace(`details.html?startapp=${encodeURIComponent(routerStartParam)}`);
   }
 
@@ -486,7 +511,115 @@ document.getElementById("list").addEventListener("click", async (e) => {
   });
   document.getElementById("search").addEventListener("input", (e) => { query = e.target.value; renderList(); });
 
-  if (!(routerStartParam && routerStartParam !== "all")) {
+
+  // ═══════════ Tabs · Earn · Me ═══════════
+  const EARN_AD_ID = "int-46766";            // Adsgram block used for "Watch ad" (change if you have a dedicated one)
+  const PAID_CHANNEL_URL = "https://t.me/Jobs204";   // shown when the goal is reached — put your paid channel link here
+  const BOT_USERNAME = "JobsFiBot";
+  let me = null, tab = "jobs", board = [];
+  const TABS = [["jobs", "💼", "Jobs"], ["saved", "❤️", "Saved"], ["earn", "🎁", "Earn"], ["me", "👤", "Me"]];
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => Number(n || 0).toLocaleString();
+
+  function renderTabs() {
+    $("tabs").innerHTML = TABS.map(([k, e, l]) => `<button data-t="${k}" class="${k === tab ? "on" : ""}"><span>${e}</span>${l}</button>`).join("");
+    $("tabs").querySelectorAll("button").forEach(b => b.addEventListener("click", () => setTab(b.dataset.t)));
+  }
+  async function setTab(t) {
+    tab = t; haptic(); renderTabs();
+    const jobsArea = t === "jobs" || t === "saved";
+    ["searchwrap", "filters", "filters2", "list"].forEach(id => $(id).classList.toggle("hidden", !jobsArea));
+    $("view-earn").classList.toggle("hidden", t !== "earn");
+    $("view-me").classList.toggle("hidden", t !== "me");
+    if (jobsArea) { extraFilter = t === "saved" ? "saved" : (extraFilter === "saved" ? "" : extraFilter); renderFilters(); renderList(); }
+    if (t === "earn" || t === "me") { await loadMe(); if (t === "earn") { loadBoard(); renderEarn(); } else renderMe(); }
+    window.scrollTo(0, 0);
+  }
+  async function loadMe() {
+    if (!INIT_DATA) return;
+    try { const r = await rpc("miniapp_me", {}); if (r && r.ok) me = r; } catch (e) {}
+  }
+  async function loadBoard() {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/jobs_leaderboard`, { method: "POST", body: JSON.stringify({ p_limit: 10 }),
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" } });
+      board = await r.json(); if (tab === "earn") renderEarn();
+    } catch (e) {}
+  }
+  const inviteLink = () => tg?.initDataUnsafe?.user ? `https://t.me/${BOT_USERNAME}?start=ref_${tg.initDataUnsafe.user.id}` : "";
+
+  function renderEarn() {
+    const el = $("view-earn");
+    if (!INIT_DATA || !me) { el.innerHTML = `<div class="state-msg">Open this app inside Telegram to earn points.</div>`; return; }
+    const pct = Math.min(100, (me.points / me.goal) * 100), left = me.ads_limit - me.ads_used;
+    el.innerHTML = `
+      <div class="panel"><div class="muted">YOUR POINTS</div><div class="big">${fmt(me.points)}</div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+        <div class="muted">${me.goal_reached ? "🎉 Goal reached — free paid-channel membership unlocked!" : `${fmt(me.points)} / ${fmt(me.goal)} → free membership of the paid channel`}</div>
+        ${me.goal_reached ? `<button class="btn" style="margin-top:12px" onclick="tg?.openTelegramLink?tg.openTelegramLink('${PAID_CHANNEL_URL}'):window.open('${PAID_CHANNEL_URL}')">🔓 Open paid channel</button>` : ""}</div>
+      <div class="panel"><h3>▶️ Watch an ad</h3>
+        <button class="btn" id="ad-btn" ${left <= 0 ? "disabled" : ""}>▶️ Watch ad · +${me.reward} points</button>
+        <div class="muted" style="margin-top:8px;text-align:center">${me.ads_used}/${me.ads_limit} today${left <= 0 ? " — come back tomorrow" : ""}</div></div>
+      <div class="panel"><h3>👥 Invite friends · +${me.invite_points} each</h3>
+        <div class="muted" style="margin-bottom:10px">Friends invited: <b style="color:#fff">${me.invited}</b></div>
+        <div style="display:flex;gap:8px"><button class="btn" id="inv-share">📤 Share link</button><button class="btn ghost" id="inv-copy" style="width:auto;padding:13px 16px">Copy</button></div></div>
+      <div class="panel"><h3>🏅 Leaderboard</h3>${board.length ? board.map(b => `<div class="row"><span>${b.rank}.</span><span>${esc(b.display_name)}</span><b>${fmt(b.points)}</b></div>`).join("") : '<div class="muted">No one on the board yet.</div>'}
+        <div class="muted" style="margin-top:8px">Your rank: #${fmt(me.rank)}</div></div>`;
+    $("ad-btn")?.addEventListener("click", watchEarnAd);
+    $("inv-share")?.addEventListener("click", () => { const u = `https://t.me/share/url?url=${encodeURIComponent(inviteLink())}&text=${encodeURIComponent("Fresh remote jobs every day 💼")}`; tg?.openTelegramLink ? tg.openTelegramLink(u) : window.open(u); });
+    $("inv-copy")?.addEventListener("click", async () => { try { await navigator.clipboard.writeText(inviteLink()); toast("Link copied"); } catch (e) { toast(inviteLink()); } });
+  }
+  async function watchEarnAd() {
+    const ctrl = window.Adsgram?.init?.({ blockId: EARN_AD_ID });
+    if (!ctrl) { toast("No ad available right now"); return; }
+    $("ad-btn").disabled = true;
+    try { await ctrl.show(); } catch (e) { toast("Watch the full ad to earn points"); renderEarn(); return; }
+    try {
+      const r = await rpc("miniapp_claim_ad", { p_placement: "earn" });
+      if (r.ok) { me.points = r.points; me.ads_used = r.used; toast(`+${r.reward} points 🎉`); }
+      else toast(r.reason === "limit" ? "Daily limit reached" : "Could not claim points");
+    } catch (e) { toast("Could not claim points"); }
+    renderEarn();
+  }
+
+  function renderMe() {
+    const el = $("view-me"), u = tg?.initDataUnsafe?.user;
+    if (!INIT_DATA || !me || !u) { el.innerHTML = `<div class="state-msg">Open this app inside Telegram to see your profile.</div>`; return; }
+    const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "You";
+    const cats = new Set(me.alert_categories || []), kws = me.alert_keywords || [];
+    const tracked = Object.keys(apps).length;
+    el.innerHTML = `
+      <div class="panel" style="display:flex;gap:14px;align-items:center">
+        <div class="avatar">${u.photo_url ? `<img src="${esc(u.photo_url)}" referrerpolicy="no-referrer" onerror="this.remove()">` : esc(name[0] || "?")}</div>
+        <div><div style="font-weight:900;font-size:15px">${esc(name)}</div><div class="muted">${u.username ? "@" + esc(u.username) + " · " : ""}Rank #${fmt(me.rank)}</div>
+        <div class="muted">⭐ ${fmt(me.points)} points</div></div></div>
+      <div class="panel"><div class="row"><span>❤️ Saved jobs</span><b>${savedSet.size}</b></div>
+        <div class="row"><span>📝 Tracked applications</span><b>${tracked}</b></div>
+        <div class="row"><span>👥 Friends invited</span><b>${me.invited}</b></div></div>
+      <div class="panel"><h3>🔔 Job alerts</h3>
+        <button class="btn ${me.notifications ? "" : "ghost"}" id="al-toggle">${me.notifications ? "🔔 Alerts ON — tap to turn off" : "🔕 Alerts OFF — tap to turn on"}</button>
+        <div class="muted" style="margin:12px 0 6px">Categories (empty = all)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${CATEGORY_ORDER.map(c => `<div class="chip ${cats.has(c) ? "active" : ""}" data-c="${c}">${CATEGORY_LABELS[c]}</div>`).join("")}</div>
+        <div class="muted" style="margin:12px 0 6px">Keywords</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${kws.map(k => `<div class="chip active" data-k="${esc(k)}">${esc(k)} ✕</div>`).join("") || '<span class="muted">None yet</span>'}</div>
+        <div style="display:flex;gap:8px"><input class="kwin" id="kw-in" placeholder="e.g. django, llm, google" maxlength="30"><button class="btn ghost" id="kw-add" style="width:auto;padding:0 16px">Add</button></div></div>`;
+    const save = async () => {
+      try { const r = await rpc("miniapp_set_alerts", { p_notifications: me.notifications, p_categories: [...cats], p_keywords: kws }); if (!r.ok) throw 0; me.alert_categories = [...cats]; me.alert_keywords = kws; toast("Saved ✓"); }
+      catch (e) { toast("Could not save. Try again."); }
+      renderMe();
+    };
+    $("al-toggle").addEventListener("click", () => { me.notifications = !me.notifications; save(); });
+    el.querySelectorAll("[data-c]").forEach(c => c.addEventListener("click", () => { cats.has(c.dataset.c) ? cats.delete(c.dataset.c) : cats.add(c.dataset.c); me.notifications = true; save(); }));
+    el.querySelectorAll("[data-k]").forEach(c => c.addEventListener("click", () => { kws.splice(kws.indexOf(c.dataset.k), 1); save(); }));
+    $("kw-add").addEventListener("click", () => {
+      const k = $("kw-in").value.toLowerCase().replace(/[^\w\s+#.\-]/g, "").trim();
+      if (k.length < 2) return; if (kws.length >= 8) { toast("Up to 8 keywords"); return; } if (!kws.includes(k)) kws.push(k); me.notifications = true; save();
+    });
+  }
+  renderTabs();
+  if (new URLSearchParams(location.search).get("tab") || routerStartParam === "wallet") setTab("earn");
+
+  if (!(routerStartParam && routerStartParam !== "all" && routerStartParam !== "wallet")) {
     loadJobs().then(() => {
       // Small delay so the list is visibly rendered first —
       // avoids the ad covering a blank/loading screen.
